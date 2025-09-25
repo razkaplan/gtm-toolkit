@@ -1,0 +1,70 @@
+# Source files - users should only get compiled dist/
+src/
+tsconfig.json
+*.ts
+
+# Development files
+.env*
+.env.local
+.env.example
+
+# Testing
+tests/
+test/
+__tests__/
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+jest.config.*
+
+# Development configuration
+.eslintrc*
+.prettierrc*
+.vscode/
+.idea/
+
+# Build artifacts not needed by users
+.tsbuildinfo
+*.tgz
+
+# Git and CI
+.git/
+.github/
+.gitignore
+
+# Documentation source (users get README.md only)
+docs/
+examples/advanced/
+
+# Development dependencies info
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# Cache directories
+.cache/
+.parcel-cache/
+.nyc_output/
+coverage/
+
+# IDE files
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+desktop.ini
+
+# Only include what users need:
+# - dist/ (compiled code)
+# - templates/ (config templates)
+# - README.md (documentation)
+# - LICENSE (legal)

@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Distribution
+dist/
+build/
+*.tgz
+
+# Environment variables
+.env*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+.nyc_output/
+test-results/
+
+# Build artifacts
+.tsbuildinfo
+.cache/
+.parcel-cache/
+
+# GTM Toolkit specific
+.gtm-backups/
+fix-execution-plan.md
+fix-execution-report.md
+baseline.json
+seo-results.json
+
+# Development files (keep private)
+dev/
+test-content/
+examples/advanced/
+docs/internal/
