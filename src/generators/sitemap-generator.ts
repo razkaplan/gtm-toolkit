@@ -19,7 +19,7 @@ interface SitemapImage {
   caption?: string;
 }
 
-interface SitemapConfig {
+export interface SitemapConfig {
   baseUrl: string;
   defaultPriority: number;
   defaultChangeFreq: 'daily' | 'weekly' | 'monthly';
@@ -571,4 +571,15 @@ export const sitemapUtils = {
     }
     return chunks;
   }
+};
+
+export type SitemapGenerateOptions = Parameters<SitemapGenerator['generate']>[0];
+
+export const generateSitemap = async (
+  config: GTMConfig,
+  options: SitemapGenerateOptions = {},
+  sitemapConfig: Partial<SitemapConfig> = {}
+): Promise<string> => {
+  const generator = new SitemapGenerator(config, sitemapConfig);
+  return generator.generate(options);
 };

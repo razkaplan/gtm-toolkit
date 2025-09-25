@@ -50,9 +50,10 @@ export function createSuggestionsCommand(): Command {
 
         // Generate fix suggestions
         const focusAreas = options.focus ? options.focus.split(',').map((a: string) => a.trim()) : ['seo', 'content', 'structure'];
+        const maxSuggestions = Number.parseInt(options.maxPerFile, 10);
         const executionPlan = await suggestionsGenerator.generateFixSuggestions(contentFiles, {
           includeAISuggestions: options.ai !== false,
-          maxSuggestionsPerFile: parseInt(options.maxPerFile),
+          maxSuggestionsPerFile: Number.isNaN(maxSuggestions) ? 10 : maxSuggestions,
           focusAreas
         });
 

@@ -1,5 +1,5 @@
-import { ClaudeContentOptimizer } from './claude-integration';
-import { lintContent, SEOLintResult } from '../core/seo-rules';
+import { ClaudeContentOptimizer, type OptimizationSuggestion } from './claude-integration';
+import { lintContent, type SEOLintResult } from '../core/seo-rules';
 import { ContentFile } from '../types';
 import fs from 'fs-extra';
 import path from 'path';
@@ -34,13 +34,19 @@ export interface ExecutionPlan {
 }
 
 export class FixSuggestionsGenerator {
-  private claudeOptimizer: ClaudeContentOptimizer;
+  private claudeOptimizer?: ClaudeContentOptimizer;
+  private readonly hasAI: boolean;
 
   constructor(options: { apiKey?: string; model?: string } = {}) {
-    this.claudeOptimizer = new ClaudeContentOptimizer({
-      apiKey: options.apiKey || process.env.CLAUDE_API_KEY || '',
-      model: options.model || 'claude-3-sonnet-20240229'
-    });
+    const apiKey = options.apiKey || process.env.CLAUDE_API_KEY;
+    this.hasAI = Boolean(apiKey);
+
+    if (apiKey) {
+      this.claudeOptimizer = new ClaudeContentOptimizer({
+        apiKey,
+        model: options.model || 'claude-3-sonnet-20240229'
+      });
+    }
   }
 
   async generateFixSuggestions(
@@ -63,14 +69,17 @@ export class FixSuggestionsGenerator {
     for (const file of contentFiles) {
       try {
         // Run SEO linting first
-        const lintResults = await lintContent(file.content, file.path);
+        const lintResults = lintContent(file.content, {
+          filePath: file.path,
+          frontmatter: file.frontmatter
+        });
 
         // Convert lint results to fix suggestions
         const lintFixes = this.convertLintResultsToFixes(file.path, lintResults);
         allFixes.push(...lintFixes);
 
         // Generate AI-powered suggestions if enabled
-        if (includeAISuggestions && this.claudeOptimizer.apiKey) {
+        if (includeAISuggestions && this.claudeOptimizer && this.hasAI) {
           const aiSuggestions = await this.generateAISuggestions(file, focusAreas);
           allFixes.push(...aiSuggestions.slice(0, maxSuggestionsPerFile));
         }
@@ -117,6 +126,10 @@ export class FixSuggestionsGenerator {
     file: ContentFile,
     focusAreas: string[]
   ): Promise<FixSuggestion[]> {
+    if (!this.claudeOptimizer || !this.hasAI) {
+      return [];
+    }
+
     try {
       const analysis = await this.claudeOptimizer.analyzeContent(file.content, {
         targetKeywords: this.extractKeywordsFromContent(file.content),
@@ -124,21 +137,38 @@ export class FixSuggestionsGenerator {
         analysisType: 'optimization'
       });
 
-      return analysis.suggestions.map((suggestion, index) => ({
-        id: `ai-${path.basename(file.path)}-${index}`,
-        file: file.path,
-        issue: suggestion.issue,
-        priority: this.mapAIPriority(suggestion.priority),
-        category: this.mapAICategory(suggestion.type),
-        suggestion: suggestion.recommendation,
-        autoFixable: suggestion.confidence > 0.8 && this.isSimpleTextChange(suggestion),
-        confidence: suggestion.confidence > 0.8 ? 'high' : suggestion.confidence > 0.6 ? 'medium' : 'low',
-        impact: suggestion.expectedImprovement,
-        difficulty: this.estimateDifficulty(suggestion),
-        estimatedTime: this.estimateTimeRequired(suggestion),
-        beforeExample: suggestion.currentContent,
-        afterExample: suggestion.suggestedContent
-      }));
+      const suggestions: OptimizationSuggestion[] = analysis.suggestions ||
+        (analysis.recommendations?.map(rec => ({
+          issue: rec.issue,
+          priority: rec.priority,
+          category: rec.category,
+          recommendation: rec.solution,
+          type: 'recommendation',
+          confidence: 0.6,
+          expectedImprovement: 'Moderate SEO improvement'
+        })) as OptimizationSuggestion[] | undefined) || [];
+
+      return suggestions.map((suggestion, index) => {
+        const numericConfidence = suggestion.confidence ?? 0.6;
+        const confidenceLabel = numericConfidence > 0.8 ? 'high' : numericConfidence > 0.6 ? 'medium' : 'low';
+        const impact = suggestion.expectedImprovement || suggestion.recommendation || 'Moderate SEO improvement';
+
+        return {
+          id: `ai-${path.basename(file.path)}-${index}`,
+          file: file.path,
+          issue: suggestion.issue,
+          priority: this.mapAIPriority(suggestion.priority),
+          category: this.mapAICategory(suggestion.type ?? 'recommendation'),
+          suggestion: suggestion.recommendation || 'Review recommended changes',
+          autoFixable: numericConfidence > 0.8 && this.isSimpleTextChange(suggestion),
+          confidence: confidenceLabel,
+          impact,
+          difficulty: this.estimateDifficulty(suggestion),
+          estimatedTime: this.estimateTimeRequired(suggestion),
+          beforeExample: suggestion.currentContent,
+          afterExample: suggestion.suggestedContent
+        };
+      });
     } catch (error) {
       console.warn(`AI analysis failed for ${file.path}:`, error);
       return [];

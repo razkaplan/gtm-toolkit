@@ -147,9 +147,15 @@ export async function initCommand(options: any) {
 
     // Install dependencies if not skipped
     if (!options.skipInstall) {
-      const installSpinner = ora('Installing dependencies...').start();
-      await installDependencies(framework, answers.analytics);
-      installSpinner.succeed('Dependencies installed');
+      const dependenciesToInstall = resolveRecommendedDependencies(framework, answers.analytics || []);
+
+      if (dependenciesToInstall.length > 0) {
+        const installSpinner = ora(`Installing ${dependenciesToInstall.length} recommended dependencies...`).start();
+        installDependencies(dependenciesToInstall);
+        installSpinner.succeed('Dependencies installed');
+      } else {
+        console.log(chalk.gray('\nNo additional dependencies detected for automatic installation.'));
+      }
     }
 
     console.log(chalk.green('\n✅ GTM Toolkit initialized successfully!\n'));
@@ -172,4 +178,22 @@ export async function initCommand(options: any) {
     console.error(chalk.red(error));
     process.exit(1);
   }
+}
+
+function resolveRecommendedDependencies(framework: string, analyticsProviders: string[]): string[] {
+  const dependencies = new Set<string>();
+
+  if (framework === 'nextjs') {
+    dependencies.add('next-sitemap');
+  }
+
+  if (analyticsProviders.includes('posthog')) {
+    dependencies.add('posthog-js');
+  }
+
+  if (analyticsProviders.includes('ga4')) {
+    dependencies.add('react-ga4');
+  }
+
+  return Array.from(dependencies);
 }

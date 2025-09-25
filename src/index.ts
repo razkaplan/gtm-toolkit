@@ -1,6 +1,12 @@
 // Public API - Only expose what users need
 // Core functionality
-export { lintContent, type SEOLintResult, type SEOLintRule } from './core/seo-rules';
+export {
+  lintContent,
+  createLintReport,
+  summarizeLintResults,
+  type SEOLintResult,
+  type SEOLintRule
+} from './core/seo-rules';
 export { researchKeywords, type KeywordResearchResult } from './core/keywords-research';
 
 // Generators

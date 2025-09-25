@@ -1,6 +1,9 @@
 // SEO Rules Engine - Based on proven guard rails from raz-kaplan-website
 
-import { SEOLintRule, SEOLintResult, ContentFrontmatter } from '../types';
+import path from 'path';
+import matter from 'gray-matter';
+import { SEOLintRule, SEOLintResult, SEOLintRuleResult, SEOLintReport, SEOLintSummary } from '../types';
+export type { SEOLintResult, SEOLintRule } from '../types';
 
 // Primary keywords for validation
 const PRIMARY_KEYWORDS = [
@@ -42,7 +45,7 @@ export const SEO_RULES: SEOLintRule[] = [
     name: 'Title Requirements',
     description: 'Title present, 45-70 characters, uses primary keyword near start',
     severity: 'error',
-    check: (content: string, frontmatter: any): SEOLintResult => {
+    check: (content: string, frontmatter: any): SEOLintRuleResult => {
       if (!frontmatter.title) {
         return {
           passed: false,
@@ -83,7 +86,7 @@ export const SEO_RULES: SEOLintRule[] = [
     name: 'Date Format',
     description: 'Date present in ISO YYYY-MM-DD format',
     severity: 'error',
-    check: (content: string, frontmatter: any): SEOLintResult => {
+    check: (content: string, frontmatter: any): SEOLintRuleResult => {
       if (!frontmatter.date) {
         return {
           passed: false,
@@ -110,7 +113,7 @@ export const SEO_RULES: SEOLintRule[] = [
     name: 'Category Validation',
     description: 'Category present and from allowed list',
     severity: 'error',
-    check: (content: string, frontmatter: any): SEOLintResult => {
+    check: (content: string, frontmatter: any): SEOLintRuleResult => {
       if (!frontmatter.category) {
         return {
           passed: false,
@@ -136,7 +139,7 @@ export const SEO_RULES: SEOLintRule[] = [
     name: 'Summary Requirements',
     description: 'Summary present, 120-160 characters, acts as meta description',
     severity: 'error',
-    check: (content: string, frontmatter: any): SEOLintResult => {
+    check: (content: string, frontmatter: any): SEOLintRuleResult => {
       if (!frontmatter.summary) {
         return {
           passed: false,
@@ -177,7 +180,7 @@ export const SEO_RULES: SEOLintRule[] = [
     name: 'Read Time',
     description: 'Readtime present (e.g., "3 min read")',
     severity: 'error',
-    check: (content: string, frontmatter: any): SEOLintResult => {
+    check: (content: string, frontmatter: any): SEOLintRuleResult => {
       if (!frontmatter.Readtime && !frontmatter.readtime) {
         return {
           passed: false,
@@ -205,7 +208,7 @@ export const SEO_RULES: SEOLintRule[] = [
     name: 'Filename Validation',
     description: 'Filename is date-prefixed slug matching title gist',
     severity: 'error',
-    check: (content: string, frontmatter: any, filename?: string): SEOLintResult => {
+    check: (content: string, frontmatter: any, filename?: string): SEOLintRuleResult => {
       if (!filename) {
         return {
           passed: false,
@@ -243,7 +246,7 @@ export const SEO_RULES: SEOLintRule[] = [
     name: 'Single H1 Rule',
     description: 'Exactly one H1 from frontmatter title, no # H1 in body',
     severity: 'error',
-    check: (content: string, frontmatter: any): SEOLintResult => {
+    check: (content: string, frontmatter: any): SEOLintRuleResult => {
       const h1Matches = content.match(/^# /gm);
       if (h1Matches && h1Matches.length > 0) {
         return {
@@ -270,7 +273,7 @@ export const SEO_RULES: SEOLintRule[] = [
     name: 'Heading Hierarchy',
     description: 'Use hierarchical headings H2/H3, no jumps',
     severity: 'warning',
-    check: (content: string, frontmatter: any): SEOLintResult => {
+    check: (content: string, frontmatter: any): SEOLintRuleResult => {
       const headings = content.match(/^#{2,6} .+$/gm) || [];
       const headingLevels = headings.map(h => h.match(/^#+/)?.[0].length || 0);
       
@@ -296,7 +299,7 @@ export const SEO_RULES: SEOLintRule[] = [
     name: 'Keyword in Opening',
     description: 'First 100 words mention primary keyword once, naturally',
     severity: 'warning',
-    check: (content: string, frontmatter: any): SEOLintResult => {
+    check: (content: string, frontmatter: any): SEOLintRuleResult => {
       // Remove frontmatter and get first 100 words
       const bodyContent = content.replace(/^---[\s\S]*?---/m, '').trim();
       const words = bodyContent.split(/\s+/).slice(0, 100).join(' ').toLowerCase();
@@ -322,7 +325,7 @@ export const SEO_RULES: SEOLintRule[] = [
     name: 'Internal Linking',
     description: 'At least one internal link to relevant post/page',
     severity: 'warning',
-    check: (content: string, frontmatter: any): SEOLintResult => {
+    check: (content: string, frontmatter: any): SEOLintRuleResult => {
       // Look for internal links (relative paths or same domain)
       const internalLinks = content.match(/\[([^\]]+)\]\((\/[^)]+|\#[^)]+)\)/g) || [];
       
@@ -343,7 +346,7 @@ export const SEO_RULES: SEOLintRule[] = [
     name: 'Descriptive Link Text',
     description: 'External links use descriptive anchor text',
     severity: 'warning',
-    check: (content: string, frontmatter: any): SEOLintResult => {
+    check: (content: string, frontmatter: any): SEOLintRuleResult => {
       const links = content.match(/\[([^\]]+)\]\([^)]+\)/g) || [];
       const badLinks = [];
       
@@ -372,7 +375,7 @@ export const SEO_RULES: SEOLintRule[] = [
     name: 'Image Alt Text',
     description: 'Images have meaningful alt text',
     severity: 'error',
-    check: (content: string, frontmatter: any): SEOLintResult => {
+    check: (content: string, frontmatter: any): SEOLintRuleResult => {
       const images = content.match(/!\[([^\]]*)\]\([^)]+\)/g) || [];
       if (images.length === 0) {
         return { passed: true, message: 'No images found - validation passed' };
@@ -404,7 +407,7 @@ export const SEO_RULES: SEOLintRule[] = [
     name: 'No Placeholder Content',
     description: 'No placeholder links or lorem ipsum',
     severity: 'error',
-    check: (content: string, frontmatter: any): SEOLintResult => {
+    check: (content: string, frontmatter: any): SEOLintRuleResult => {
       const placeholders = [
         /\[([^\]]+)\]\(#\)/g, // [text](#)
         /\[([^\]]+)\]\(\/todo\)/gi, // [text](/todo)
@@ -441,7 +444,7 @@ export const SEO_RULES: SEOLintRule[] = [
     name: 'Sentence Length',
     description: 'Sentences under 25-30 words in first two paragraphs',
     severity: 'info',
-    check: (content: string, frontmatter: any): SEOLintResult => {
+    check: (content: string, frontmatter: any): SEOLintRuleResult => {
       const bodyContent = content.replace(/^---[\s\S]*?---/m, '').trim();
       const paragraphs = bodyContent.split(/\n\s*\n/).filter(p => p.trim().length > 0);
       
@@ -472,7 +475,7 @@ export const SEO_RULES: SEOLintRule[] = [
     name: 'Markdown Syntax',
     description: 'No broken Markdown syntax',
     severity: 'error',
-    check: (content: string, frontmatter: any): SEOLintResult => {
+    check: (content: string, frontmatter: any): SEOLintRuleResult => {
       const issues = [];
       
       // Unclosed links
@@ -508,7 +511,7 @@ export const SEO_RULES: SEOLintRule[] = [
     name: 'Keyword Density',
     description: 'Keyword density under 2.5%',
     severity: 'warning',
-    check: (content: string, frontmatter: any): SEOLintResult => {
+    check: (content: string, frontmatter: any): SEOLintRuleResult => {
       const bodyContent = content.replace(/^---[\s\S]*?---/m, '').toLowerCase();
       const words = bodyContent.split(/\s+/).filter(w => w.length > 2);
       const totalWords = words.length;
@@ -544,4 +547,70 @@ export const getRulesBySeverity = (severity: 'error' | 'warning' | 'info'): SEOL
 // Get all rule IDs
 export const getAllRuleIds = (): string[] => {
   return SEO_RULES.map(rule => rule.id);
+};
+
+export interface LintContentOptions {
+  filePath?: string;
+  filename?: string;
+  frontmatter?: Record<string, any>;
+}
+
+export const lintContent = (rawContent: string, options: LintContentOptions = {}): SEOLintResult[] => {
+  const { frontmatter: providedFrontmatter } = options;
+
+  let frontmatter: Record<string, any> = providedFrontmatter ?? {};
+  if (!providedFrontmatter) {
+    try {
+      const parsed = matter(rawContent);
+      frontmatter = (parsed.data as Record<string, any>) || {};
+    } catch {
+      frontmatter = {};
+    }
+  }
+
+  const filename = options.filename || (options.filePath ? path.basename(options.filePath) : undefined);
+
+  return SEO_RULES.map(rule => {
+    const result = rule.check(rawContent, frontmatter, filename);
+    return {
+      rule: rule.id,
+      name: rule.name,
+      severity: rule.severity,
+      ...result
+    };
+  });
+};
+
+export const summarizeLintResults = (results: SEOLintResult[]): { summary: SEOLintSummary; score: number } => {
+  const summary = results.reduce<SEOLintSummary>(
+    (acc, result) => {
+      if (result.passed) {
+        acc.passed += 1;
+      } else if (result.severity === 'error') {
+        acc.errors += 1;
+      } else if (result.severity === 'warning') {
+        acc.warnings += 1;
+      }
+      return acc;
+    },
+    { errors: 0, warnings: 0, passed: 0 }
+  );
+
+  const score = results.length > 0 ? (summary.passed / results.length) * 100 : 100;
+  return { summary, score };
+};
+
+export const createLintReport = (
+  rawContent: string,
+  options: LintContentOptions = {}
+): SEOLintReport => {
+  const results = lintContent(rawContent, options);
+  const { summary, score } = summarizeLintResults(results);
+
+  return {
+    file: options.filePath || options.filename || 'unknown',
+    results,
+    score,
+    summary
+  };
 };

@@ -10,7 +10,7 @@ interface GSCCredentials {
   project_id: string;
 }
 
-interface PerformanceQuery {
+export interface PerformanceQuery {
   startDate: string;
   endDate: string;
   dimensions?: ('query' | 'page' | 'country' | 'device')[];
@@ -54,7 +54,7 @@ interface IndexingStatus {
   lastCrawlTime?: string;
 }
 
-interface SearchAnalyticsReport {
+export interface SearchAnalyticsReport {
   totalClicks: number;
   totalImpressions: number;
   averageCTR: number;
@@ -514,6 +514,9 @@ export class GoogleSearchConsoleClient {
     return csv;
   }
 }
+
+export type GSCQuery = PerformanceQuery;
+export type GSCResult = SearchAnalyticsReport;
 
 // Utility functions for GSC data analysis
 export const gscUtils = {

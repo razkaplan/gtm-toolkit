@@ -32,7 +32,7 @@ export async function loadContentFiles(
     return [{
       path: contentPath,
       content,
-      frontmatter: parsed.data,
+      frontmatter: (parsed.data as Record<string, any>) || {},
       body: parsed.content,
       lastModified: (await fs.stat(contentPath)).mtime
     }];
@@ -68,7 +68,7 @@ export async function loadContentFiles(
       contentFiles.push({
         path: filePath,
         content,
-        frontmatter: parsed.data,
+        frontmatter: (parsed.data as Record<string, any>) || {},
         body: parsed.content,
         lastModified: stats.mtime
       });

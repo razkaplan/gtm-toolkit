@@ -35,7 +35,7 @@ gtm-toolkit init --framework nextjs
 gtm-toolkit generate --all
 
 # Lint your content
-gtm-toolkit lint content/blog/**/*.md
+gtm-toolkit lint content/blog
 ```
 
 ## ✨ Core Features
@@ -73,35 +73,35 @@ gtm-toolkit lint content/blog/**/*.md
 
 ### SEO Content Linting
 ```bash
-# Lint all content with detailed reports
-gtm-toolkit lint content/blog/ --format detailed
+# Lint an entire content directory and show human-readable output
+gtm-toolkit lint content/blog --format console
 
-# Lint only changed files (perfect for CI/CD)
-gtm-toolkit lint --changed --format json
+# Emit JSON results for CI tooling and fail the build on errors
+gtm-toolkit lint "content/**/*.md" --format json --fail-on-error
 
-# Auto-fix common issues
-gtm-toolkit lint content/ --fix --confidence high
+# Lint a single file before opening a PR
+gtm-toolkit lint content/blog/2024-01-01-launch.md
 ```
 
 ### AI-Powered Analysis
 ```bash
-# Analyze competitor content strategy
-gtm-toolkit analyze competitor https://competitor.com --output strategy.md
+# Analyze a competitor site (requires CLAUDE_API_KEY)
+gtm-toolkit analyze --competitor https://competitor.com --output competitor.json
 
-# Research keywords with AI insights
-gtm-toolkit keywords research \"gtm as code\" --audience developers
+# Generate content gap ideas (requires CLAUDE_API_KEY)
+gtm-toolkit analyze --gaps
 
-# Generate content gaps analysis
-gtm-toolkit analyze gaps --competitors urls.txt --output opportunities.json
+# Research keywords with AI assistance
+gtm-toolkit analyze --keywords "gtm as code" --output keywords.json
 ```
 
 ### Automated File Generation
 ```bash
 # Generate robots.txt with AI bot controls
-gtm-toolkit generate robots --ai-bots allow --custom-rules rules.yml
+gtm-toolkit generate --robots
 
 # Create comprehensive sitemap with images
-gtm-toolkit generate sitemap --include-images --priority-scoring
+gtm-toolkit generate --sitemap
 
 # Generate complete SEO setup
 gtm-toolkit generate --all --framework nextjs
@@ -109,14 +109,43 @@ gtm-toolkit generate --all --framework nextjs
 
 ### Google Search Console Integration
 ```bash
-# Track keyword performance
-gtm-toolkit gsc keywords --days 30 --min-impressions 100
+import { GoogleSearchConsoleClient } from 'gtm-toolkit';
 
-# Monitor indexing status
-gtm-toolkit gsc index-status --urls sitemap.xml --alert-on-issues
+const client = new GoogleSearchConsoleClient(credentials, 'https://yoursite.com');
+const report = await client.generateSEOInsights({ days: 30 });
+```
 
-# Generate SEO insights report
-gtm-toolkit gsc insights --export insights-report.json
+## 🧰 CLI Overview
+
+| Command | What it does |
+| --- | --- |
+| `gtm-toolkit init` | Detects your framework, scaffolds `gtm.config.js`, and optionally installs recommended dependencies. |
+| `gtm-toolkit generate` | Writes `robots.txt`, `sitemap.xml`, and other SEO scaffolding for your framework. |
+| `gtm-toolkit lint` | Runs the 50+ SEO guard rails against Markdown content with console or JSON output. |
+| `gtm-toolkit analyze` | Triggers Claude-powered competitor, keyword, and gap analysis helpers. |
+| `gtm-toolkit suggestions` | Builds an execution plan combining lint findings with AI recommendations. |
+| `gtm-toolkit fix` | Applies auto-fixable issues from a plan, optionally reviewing each change interactively. |
+| `gtm-toolkit audit` | Checks content files plus technical assets like `robots.txt` and `sitemap.xml`. |
+
+## 📦 Programmatic API Highlights
+
+```ts
+import {
+  lintContent,
+  summarizeLintResults,
+  generateRobots,
+  generateSitemap,
+  researchKeywords,
+  GoogleSearchConsoleClient
+} from 'gtm-toolkit';
+
+const results = lintContent(markdownString, { filename: 'post.md' });
+const { summary, score } = summarizeLintResults(results);
+
+const robotsTxt = generateRobots(config, { includeAnalytics: true });
+const sitemapXml = await generateSitemap(config, { contentPath: 'content', outputPath: 'public' });
+
+const keywordIdeas = await researchKeywords('gtm as code', 'developers');
 ```
 
 ## 🛠 Configuration
@@ -132,6 +161,11 @@ module.exports = {
     defaultTitle: 'Your Default Title',
     defaultDescription: 'Your meta description'
   },
+  content: {
+    contentPath: 'content',
+    blogPath: 'content/blog',
+    outputPath: 'public'
+  },
   robots: {
     allowAIBots: true,
     customRules: [
@@ -140,12 +174,9 @@ module.exports = {
     ],
     sitemapUrl: 'https://yoursite.com/sitemap.xml'
   },
-  claude: {
-    apiKey: process.env.CLAUDE_API_KEY // Optional: for AI features
-  },
-  googleSearchConsole: {
-    credentials: './gsc-credentials.json', // Optional
-    siteUrl: 'https://yoursite.com'
+  ai: {
+    apiKey: process.env.CLAUDE_API_KEY,
+    model: 'claude-3-sonnet-20240229'
   }
 }
 ```

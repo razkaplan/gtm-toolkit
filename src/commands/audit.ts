@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import ora from 'ora';
 import { SEO_RULES } from '../core/seo-rules';
 import { readdirSync, readFileSync, existsSync } from 'fs';
-import { join } from 'path';
+import { join, basename } from 'path';
 import matter from 'gray-matter';
 
 export async function auditCommand(options: any) {
@@ -104,7 +104,7 @@ function auditFile(filePath: string): { issues: number; score: number } {
     let passedRules = 0;
     
     SEO_RULES.forEach(rule => {
-      const result = rule.check(content, frontmatter, filePath);
+      const result = rule.check(content, frontmatter, basename(filePath));
       if (!result.passed) {
         issues++;
       } else {

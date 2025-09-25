@@ -3,7 +3,7 @@
 import axios from 'axios';
 import { google } from 'googleapis';
 
-interface KeywordData {
+export interface KeywordData {
   keyword: string;
   searchVolume: number;
   difficulty: number;
@@ -30,7 +30,7 @@ interface CompetitorKeywords {
   totalTraffic: number;
 }
 
-interface KeywordResearchConfig {
+export interface KeywordResearchConfig {
   gscCredentials?: {
     client_email: string;
     private_key: string;
@@ -397,6 +397,23 @@ export class KeywordsResearchTool {
       ]
     };
   }
+}
+
+export type KeywordResearchResult = KeywordData;
+
+export async function researchKeywords(
+  topic: string,
+  targetAudience: string,
+  config: Partial<KeywordResearchConfig> = {}
+): Promise<KeywordResearchResult[]> {
+  const tool = new KeywordsResearchTool({
+    siteUrl: config.siteUrl || 'https://example.com',
+    gscCredentials: config.gscCredentials,
+    claudeApiKey: config.claudeApiKey,
+    serpApiKey: config.serpApiKey
+  });
+
+  return tool.researchKeywordsWithAI(topic, targetAudience);
 }
 
 // Utility functions for keyword analysis

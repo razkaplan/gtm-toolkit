@@ -4,14 +4,14 @@ import { writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { GTMConfig } from '../types';
 
-interface RobotRule {
+export interface RobotRule {
   userAgent: string;
   allow?: string[];
   disallow?: string[];
   crawlDelay?: number;
 }
 
-interface AIBotConfig {
+export interface AIBotConfig {
   allowAIBots: boolean;
   specificBots: {
     googleBot: boolean;
@@ -482,4 +482,11 @@ export const robotsUtils = {
       }
     ];
   }
+};
+
+export type RobotsConfig = Parameters<RobotsGenerator['generate']>[0];
+
+export const generateRobots = (config: GTMConfig, options: RobotsConfig = {}): string => {
+  const generator = new RobotsGenerator(config);
+  return generator.generate(options);
 };

@@ -24,6 +24,7 @@ export interface GTMConfig {
     blogPath?: string;
     contentPath?: string;
     outputPath?: string;
+    extensions?: string[];
   };
   robots: {
     allowAIBots: boolean;
@@ -35,33 +36,73 @@ export interface GTMConfig {
     optimizeForAI: boolean;
     structuredData: boolean;
   };
+  ai?: {
+    apiKey?: string;
+    model?: string;
+  };
+}
+
+export interface ContentFile {
+  path: string;
+  content: string;
+  frontmatter: Record<string, any>;
+  body: string;
+  lastModified: Date;
 }
 
 // SEO Linting types
-export interface SEOLintRule {
-  id: string;
-  name: string;
-  description: string;
-  severity: 'error' | 'warning' | 'info';
-  check: (content: string, frontmatter: any, filename?: string) => SEOLintResult;
-}
-
-export interface SEOLintResult {
+export interface SEOLintRuleResult {
   passed: boolean;
   message: string;
   suggestion?: string;
   line?: number;
 }
 
+export interface SEOLintRule {
+  id: string;
+  name: string;
+  description: string;
+  severity: 'error' | 'warning' | 'info';
+  check: (content: string, frontmatter: any, filename?: string) => SEOLintRuleResult;
+}
+
+export interface SEOLintResult extends SEOLintRuleResult {
+  rule: string;
+  name: string;
+  severity: 'error' | 'warning' | 'info';
+}
+
+export interface SEOLintSummary {
+  errors: number;
+  warnings: number;
+  passed: number;
+}
+
 export interface SEOLintReport {
   file: string;
-  results: Array<SEOLintResult & { rule: string }>;
+  results: SEOLintResult[];
   score: number;
-  summary: {
-    errors: number;
-    warnings: number;
-    passed: number;
-  };
+  summary: SEOLintSummary;
+}
+
+export interface AuditResult {
+  file: string;
+  issues: number;
+  score: number;
+}
+
+export interface GenerateOptions {
+  robots?: boolean;
+  sitemap?: boolean;
+  meta?: boolean;
+  all?: boolean;
+}
+
+export interface AnalyzeOptions {
+  competitor?: string;
+  gaps?: boolean;
+  keywords?: string;
+  output?: string;
 }
 
 // Analytics types

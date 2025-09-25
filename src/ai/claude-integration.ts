@@ -11,7 +11,7 @@ interface ClaudeConfig {
   temperature?: number;
 }
 
-interface ContentBrief {
+export interface ContentBrief {
   topic: string;
   targetAudience: string;
   primaryKeywords: string[];
@@ -48,7 +48,19 @@ interface OptimizedContent {
   seoImpact: string;
 }
 
-interface ContentAnalysisResult {
+export interface OptimizationSuggestion {
+  issue: string;
+  priority: 'high' | 'medium' | 'low';
+  category: 'seo' | 'readability' | 'structure' | 'engagement' | 'technical';
+  recommendation: string;
+  type?: string;
+  confidence?: number;
+  expectedImprovement?: string;
+  currentContent?: string;
+  suggestedContent?: string;
+}
+
+export interface ContentAnalysisResult {
   seoScore: number;
   readabilityScore: number;
   keywordAnalysis: {
@@ -71,6 +83,7 @@ interface ContentAnalysisResult {
     gapsToFill: string[];
     strengths: string[];
   };
+  suggestions?: OptimizationSuggestion[];
 }
 
 export class ClaudeContentOptimizer {
@@ -105,6 +118,7 @@ export class ClaudeContentOptimizer {
     targetKeywords?: string[];
     competitorContent?: string[];
     targetAudience?: string;
+    analysisType?: string;
   } = {}): Promise<ContentAnalysisResult> {
     const prompt = `
       As an expert SEO content analyst, analyze this content for optimization opportunities:
