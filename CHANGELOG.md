@@ -18,6 +18,9 @@
 - Replaced all third-party authorship references; README now credits Raz Kaplan explicitly and introduces an MIT license with attribution links.
 - Replaced previous Claude-specific helpers with local AI instruction builders; CLI now outputs prompts users can paste into Copilot, Cursor, Claude Desktop, etc.
 
+### Community Callout
+- This release still has a handful of UX rough edges (init metadata detection, analytics setup, strategy docs). I’m aware they need polish and would love help from contributors—issues and PRs are very welcome.
+
 ### Next Steps for Docs & Marketing
 - Document the new AEO CSV workflow and how to interpret AI-overview keyword reports.
 - Publish a how-to on automatic GA4 detection/insertion so teams know what happens during init.
