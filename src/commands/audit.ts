@@ -6,7 +6,13 @@ import { readdirSync, readFileSync, existsSync } from 'fs';
 import { join, basename } from 'path';
 import matter from 'gray-matter';
 
-export async function auditCommand(options: any) {
+interface AuditOptions {
+  content?: boolean;
+  technical?: boolean;
+  all?: boolean;
+}
+
+export async function auditCommand(options: AuditOptions = {}) {
   console.log(chalk.cyan('🕵️ GTM Toolkit Auditor'));
 
   try {
@@ -33,7 +39,7 @@ export async function auditCommand(options: any) {
     if (options.technical || options.all) {
       const spinner = ora('Auditing technical SEO...').start();
       
-      const technicalIssues = [];
+      const technicalIssues: string[] = [];
       
       // Check for robots.txt
       if (!existsSync('public/robots.txt')) {
@@ -98,7 +104,7 @@ async function auditContentDirectory(dirPath: string): Promise<{
 function auditFile(filePath: string): { issues: number; score: number } {
   try {
     const content = readFileSync(filePath, 'utf8');
-    const { data: frontmatter, content: body } = matter(content);
+    const { data: frontmatter } = matter(content);
     
     let issues = 0;
     let passedRules = 0;

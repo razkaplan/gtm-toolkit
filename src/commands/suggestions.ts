@@ -7,19 +7,28 @@ import fs from 'fs-extra';
 import chalk from 'chalk';
 import ora from 'ora';
 
+interface SuggestionsCommandOptions {
+  output: string;
+  ai?: boolean;
+  maxPerFile: string;
+  focus: string;
+  format: string;
+  preview?: boolean;
+}
+
 export function createSuggestionsCommand(): Command {
   const cmd = new Command('suggestions');
 
   cmd
-    .description('Generate Claude AI-powered fix suggestions and execution plan')
+    .description('Generate AI-powered fix suggestions and execution plan')
     .argument('[path]', 'Content directory to analyze', 'content/')
     .option('-o, --output <file>', 'Output file for execution plan', 'fix-execution-plan.md')
-    .option('--no-ai', 'Disable Claude AI suggestions (use SEO linting only)')
+    .option('--no-ai', 'Disable AI suggestions (use SEO linting only)')
     .option('--max-per-file <number>', 'Maximum suggestions per file', '10')
     .option('--focus <areas>', 'Focus areas (comma-separated): seo,content,structure,technical', 'seo,content,structure')
     .option('--format <type>', 'Output format: markdown, json', 'markdown')
     .option('--preview', 'Preview suggestions without saving to file')
-    .action(async (contentPath: string, options) => {
+    .action(async (contentPath: string, options: SuggestionsCommandOptions) => {
       const config = await loadConfig();
       const spinner = ora('Analyzing content and generating fix suggestions...').start();
 
@@ -43,13 +52,12 @@ export function createSuggestionsCommand(): Command {
         spinner.text = `Found ${contentFiles.length} content files. Generating suggestions...`;
 
         // Initialize fix suggestions generator
-        const suggestionsGenerator = new FixSuggestionsGenerator({
-          apiKey: config.ai?.apiKey || process.env.CLAUDE_API_KEY,
-          model: config.ai?.model
-        });
+        const suggestionsGenerator = new FixSuggestionsGenerator();
 
         // Generate fix suggestions
-        const focusAreas = options.focus ? options.focus.split(',').map((a: string) => a.trim()) : ['seo', 'content', 'structure'];
+        const focusAreas = options.focus
+          ? options.focus.split(',').map(area => area.trim())
+          : ['seo', 'content', 'structure'];
         const maxSuggestions = Number.parseInt(options.maxPerFile, 10);
         const executionPlan = await suggestionsGenerator.generateFixSuggestions(contentFiles, {
           includeAISuggestions: options.ai !== false,
@@ -68,8 +76,7 @@ export function createSuggestionsCommand(): Command {
           if (options.format === 'json') {
             console.log(JSON.stringify(executionPlan, null, 2));
           } else {
-            const generator = new FixSuggestionsGenerator();
-            const markdown = (generator as any).formatExecutionPlanAsMarkdown(executionPlan);
+            const markdown = suggestionsGenerator.formatExecutionPlanAsMarkdown(executionPlan);
             console.log(markdown);
           }
         } else {
@@ -106,6 +113,8 @@ function displayExecutionSummary(plan: ExecutionPlan): void {
   console.log(chalk.green(`✅ Auto-fixable issues: ${summary.autoFixableIssues}`));
   console.log(chalk.yellow(`👨‍💻 Manual review required: ${summary.manualReviewIssues}`));
   console.log(chalk.blue(`⏱️  Estimated total time: ${summary.estimatedTotalTime}`));
+
+  console.log('\n' + chalk.gray('🧠 AI prompts in this plan are designed for local assistants (Copilot, Cursor, Claude Desktop, etc.). Copy them into your workflow as needed.'));
 
   console.log('\n' + chalk.bold('Priority Breakdown:'));
   Object.entries(summary.priorityBreakdown).forEach(([priority, count]) => {

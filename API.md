@@ -50,19 +50,18 @@ const sitemapContent = await generateSitemap({
 });
 ```
 
-### Claude AI Integration
+### AI Prompt Helpers (optional)
 
 ```typescript
-import { ClaudeContentOptimizer, ContentAnalysisResult } from 'gtm-toolkit';
+import { createContentAnalysisInstruction } from 'gtm-toolkit';
 
-const optimizer = new ClaudeContentOptimizer({
-  apiKey: process.env.CLAUDE_API_KEY
+const instruction = createContentAnalysisInstruction('Your content here', {
+  targetKeywords: ['seo', 'content optimization'],
+  targetAudience: 'B2B marketers'
 });
 
-const analysis: ContentAnalysisResult = await optimizer.analyzeContent(
-  'Your content here',
-  { targetKeywords: ['seo', 'content optimization'] }
-);
+console.log(instruction.prompt);
+// Feed this prompt into your preferred local AI assistant (Copilot, Cursor, etc.).
 ```
 
 ### Google Search Console
@@ -90,7 +89,7 @@ import type {
   AuditResult,
   GenerateOptions,
   AnalyzeOptions,
-  OptimizationSuggestion
+  LocalAIInstruction
 } from 'gtm-toolkit';
 ```
 
@@ -116,7 +115,7 @@ gtm-toolkit lint content/
 gtm-toolkit generate --all
 
 # AI analysis
-gtm-toolkit analyze --ai content/blog/
+gtm-toolkit analyze --keywords "gtm as code"
 ```
 
 ## Configuration
@@ -135,8 +134,8 @@ module.exports = {
     }
   },
   ai: {
-    provider: 'claude',
-    model: 'claude-3-sonnet-20240229'
+    assistant: 'local-ai',
+    notes: 'Use GTM Toolkit prompts with your preferred assistant'
   }
 };
 ```

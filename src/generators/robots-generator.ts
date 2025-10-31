@@ -1,6 +1,6 @@
 // Intelligent robots.txt Generator with AI Bot Controls
 
-import { writeFileSync, existsSync } from 'fs';
+import { writeFileSync } from 'fs';
 import { join } from 'path';
 import { GTMConfig } from '../types';
 
@@ -271,7 +271,6 @@ export class RobotsGenerator {
     const warnings: string[] = [];
     const lines = content.split('\n');
     
-    let currentUserAgent = '';
     let hasUserAgent = false;
     let hasSitemap = false;
     
@@ -292,7 +291,6 @@ export class RobotsGenerator {
           if (!value) {
             errors.push(`Line ${index + 1}: User-agent missing value`);
           }
-          currentUserAgent = value;
           hasUserAgent = true;
           break;
           
@@ -379,7 +377,6 @@ export class RobotsGenerator {
     crawlDelay?: number;
   } {
     const lines = robotsContent.split('\n');
-    let currentUserAgent = '';
     let isMatchingAgent = false;
     let crawlDelay: number | undefined;
     
@@ -392,7 +389,6 @@ export class RobotsGenerator {
       
       switch (directive.toLowerCase()) {
         case 'user-agent':
-          currentUserAgent = value;
           isMatchingAgent = value === '*' || value === userAgent;
           break;
           

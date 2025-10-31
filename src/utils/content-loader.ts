@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
-import glob from 'glob';
+import { globSync } from 'glob';
 import matter from 'gray-matter';
 import { ContentFile } from '../types';
 
@@ -32,7 +32,7 @@ export async function loadContentFiles(
     return [{
       path: contentPath,
       content,
-      frontmatter: (parsed.data as Record<string, any>) || {},
+      frontmatter: (parsed.data as Record<string, unknown>) || {},
       body: parsed.content,
       lastModified: (await fs.stat(contentPath)).mtime
     }];
@@ -43,7 +43,7 @@ export async function loadContentFiles(
     ? `**/*{${extensions.join(',')}}`
     : `*{${extensions.join(',')}}`;
 
-  const files = glob.sync(pattern, {
+  const files = globSync(pattern, {
     cwd: contentPath,
     absolute: false,
     ignore: [
@@ -68,7 +68,7 @@ export async function loadContentFiles(
       contentFiles.push({
         path: filePath,
         content,
-        frontmatter: (parsed.data as Record<string, any>) || {},
+        frontmatter: (parsed.data as Record<string, unknown>) || {},
         body: parsed.content,
         lastModified: stats.mtime
       });
@@ -150,25 +150,29 @@ export function sortContentFiles(
     let comparison = 0;
 
     switch (sortBy) {
-      case 'date':
+      case 'date': {
         const dateA = new Date(a.frontmatter.date || 0);
         const dateB = new Date(b.frontmatter.date || 0);
         comparison = dateA.getTime() - dateB.getTime();
         break;
+      }
 
-      case 'title':
+      case 'title': {
         const titleA = a.frontmatter.title || path.basename(a.path);
         const titleB = b.frontmatter.title || path.basename(b.path);
         comparison = titleA.localeCompare(titleB);
         break;
+      }
 
-      case 'lastModified':
+      case 'lastModified': {
         comparison = a.lastModified.getTime() - b.lastModified.getTime();
         break;
+      }
 
-      case 'size':
+      case 'size': {
         comparison = a.content.length - b.content.length;
         break;
+      }
     }
 
     return order === 'desc' ? -comparison : comparison;

@@ -1,6 +1,13 @@
 // Framework detection utilities
 import { existsSync, readFileSync } from 'fs';
 
+interface FrameworkConfigDetails {
+  publicDir: string;
+  contentDir: string;
+  buildDir: string;
+  configFile: string;
+}
+
 export function detectFramework(): string | null {
   // Check for package.json to detect framework
   if (existsSync('package.json')) {
@@ -33,8 +40,8 @@ export function detectFramework(): string | null {
   return null;
 }
 
-export function getFrameworkConfig(framework: string): any {
-  const configs = {
+export function getFrameworkConfig(framework: string): FrameworkConfigDetails {
+  const configs: Record<string, FrameworkConfigDetails> = {
     nextjs: {
       publicDir: 'public',
       contentDir: 'content',
@@ -61,5 +68,5 @@ export function getFrameworkConfig(framework: string): any {
     }
   };
 
-  return configs[framework as keyof typeof configs] || configs.nextjs;
+  return configs[framework] || configs.nextjs;
 }

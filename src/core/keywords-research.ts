@@ -1,7 +1,6 @@
 // Keywords Research Tool with Google Search Console Integration
 
-import axios from 'axios';
-import { google } from 'googleapis';
+import { google, searchconsole_v1 } from 'googleapis';
 
 export interface KeywordData {
   keyword: string;
@@ -37,18 +36,18 @@ export interface KeywordResearchConfig {
     project_id: string;
   };
   siteUrl: string;
-  claudeApiKey?: string;
+  aiAssistantKey?: string;
   serpApiKey?: string;
 }
 
 export class KeywordsResearchTool {
   private config: KeywordResearchConfig;
-  private gscClient?: any;
-  private searchConsole?: any;
+  private searchConsole?: searchconsole_v1.Resource$Searchanalytics;
+  private initializationPromise?: Promise<void>;
 
   constructor(config: KeywordResearchConfig) {
     this.config = config;
-    this.initializeGSC();
+    this.initializationPromise = this.initializeGSC();
   }
 
   private async initializeGSC() {
@@ -63,11 +62,19 @@ export class KeywordsResearchTool {
         scopes: ['https://www.googleapis.com/auth/webmasters.readonly']
       });
 
-      this.gscClient = await auth.getClient();
-      this.searchConsole = google.searchconsole({ version: 'v1', auth: this.gscClient });
+      const client = await auth.getClient();
+      const searchConsole = google.searchconsole({ version: 'v1', auth: client as any });
+      this.searchConsole = searchConsole.searchanalytics;
       console.log('Google Search Console initialized successfully');
     } catch (error) {
       console.error('Failed to initialize Google Search Console:', error);
+    }
+  }
+
+  private async ensureInitialized(): Promise<void> {
+    if (this.initializationPromise) {
+      await this.initializationPromise;
+      this.initializationPromise = undefined;
     }
   }
 
@@ -78,12 +85,13 @@ export class KeywordsResearchTool {
     dimensions?: ('query' | 'page' | 'country' | 'device')[];
     rowLimit?: number;
   }): Promise<GSCPerformanceData[]> {
+    await this.ensureInitialized();
     if (!this.searchConsole) {
       throw new Error('Google Search Console not initialized');
     }
 
     try {
-      const response = await this.searchConsole.searchanalytics.query({
+      const response = await this.searchConsole.query({
         siteUrl: this.config.siteUrl,
         requestBody: {
           startDate: options.startDate,
@@ -94,65 +102,39 @@ export class KeywordsResearchTool {
         }
       });
 
-      return response.data.rows?.map((row: any) => ({
-        query: row.keys[0],
-        clicks: row.clicks,
-        impressions: row.impressions,
-        ctr: row.ctr,
-        position: row.position,
+      const rows = response.data.rows ?? [];
+      return rows.map((row: searchconsole_v1.Schema$ApiDataRow) => ({
+        query: row.keys?.[0] ?? '',
+        clicks: row.clicks ?? 0,
+        impressions: row.impressions ?? 0,
+        ctr: row.ctr ?? 0,
+        position: row.position ?? 0,
         date: options.endDate
-      })) || [];
+      }));
     } catch (error) {
       console.error('Failed to fetch GSC data:', error);
       return [];
     }
   }
 
-  // AI-powered keyword research using Claude
+  // AI-powered keyword research helper (prompts + mock data)
   async researchKeywordsWithAI(topic: string, targetAudience: string): Promise<KeywordData[]> {
-    if (!this.config.claudeApiKey) {
-      console.warn('Claude API key not provided. Using fallback keyword suggestions.');
+    if (!this.config.aiAssistantKey) {
+      console.warn('AI assistant key not provided. Using fallback keyword suggestions.');
       return this.getFallbackKeywords(topic);
     }
 
-    try {
-      const prompt = `
-        Act as an expert SEO keyword researcher. Generate a comprehensive list of keywords for the topic: "${topic}"
-        Target audience: ${targetAudience}
-        
-        For each keyword, provide:
-        1. Search volume estimate (realistic numbers)
-        2. Keyword difficulty (0-100 scale)
-        3. Search intent (informational, commercial, transactional, navigational)
-        4. Related keywords
-        5. Competition level (low, medium, high)
-        
-        Focus on:
-        - Long-tail keywords (3+ words)
-        - Question-based keywords
-        - Comparison keywords
-        - Solution-oriented keywords
-        - Technical terms relevant to developers/marketers
-        
-        Return as JSON array with this structure:
-        {
-          "keyword": "string",
-          "searchVolume": number,
-          "difficulty": number,
-          "searchIntent": "informational|commercial|transactional|navigational",
-          "competition": "low|medium|high",
-          "relatedKeywords": ["string"]
-        }
-        
-        Generate 20-30 high-quality keywords.
-      `;
+    const contextualTopic = targetAudience
+      ? `${topic} for ${targetAudience}`
+      : topic;
 
-      // Note: In real implementation, you'd make actual Claude API call here
-      // For now, returning structured mock data that follows the pattern
-      return this.generateStructuredKeywords(topic);
+    try {
+      // Note: In real implementation, you'd make actual AI assistant call here using the prompt above.
+      // For now, returning structured mock data that follows the pattern.
+      return this.generateStructuredKeywords(contextualTopic);
     } catch (error) {
       console.error('Failed to research keywords with AI:', error);
-      return this.getFallbackKeywords(topic);
+      return this.getFallbackKeywords(contextualTopic);
     }
   }
 
@@ -285,10 +267,10 @@ export class KeywordsResearchTool {
       searchVolume: Math.floor(Math.random() * 5000) + 100,
       difficulty: Math.floor(Math.random() * 80) + 10,
       cpc: Math.round((Math.random() * 5 + 0.5) * 100) / 100,
-      trend: ['rising', 'falling', 'stable'][Math.floor(Math.random() * 3)] as 'rising' | 'falling' | 'stable',
-      competition: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)] as 'low' | 'medium' | 'high',
+      trend: ['rising', 'falling', 'stable'][Math.floor(Math.random() * 3)] as KeywordData['trend'],
+      competition: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)] as KeywordData['competition'],
       relatedKeywords: baseKeywords.filter((_, i) => i !== index).slice(0, 3),
-      searchIntent: ['informational', 'commercial', 'transactional', 'navigational'][Math.floor(Math.random() * 4)] as any
+      searchIntent: ['informational', 'commercial', 'transactional', 'navigational'][Math.floor(Math.random() * 4)] as KeywordData['searchIntent']
     }));
   }
 
@@ -315,17 +297,21 @@ export class KeywordsResearchTool {
     keyword: string;
     rankings: { date: string; position: number; impressions: number; clicks: number; }[];
   }[]> {
+    await this.ensureInitialized();
     if (!this.searchConsole) {
       throw new Error('Google Search Console not initialized');
     }
 
-    const results = [];
+    const results: {
+      keyword: string;
+      rankings: { date: string; position: number; impressions: number; clicks: number; }[];
+    }[] = [];
     const endDate = new Date().toISOString().split('T')[0];
     const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
     for (const keyword of keywords) {
       try {
-        const response = await this.searchConsole.searchanalytics.query({
+        const response = await this.searchConsole.query({
           siteUrl: this.config.siteUrl,
           requestBody: {
             startDate,
@@ -341,12 +327,13 @@ export class KeywordsResearchTool {
           }
         });
 
-        const rankings = response.data.rows?.map((row: any) => ({
-          date: row.keys[0],
-          position: row.position,
-          impressions: row.impressions,
-          clicks: row.clicks
-        })) || [];
+        const rows = response.data.rows ?? [];
+        const rankings = rows.map((row: searchconsole_v1.Schema$ApiDataRow) => ({
+          date: row.keys?.[0] ?? startDate,
+          position: row.position ?? 0,
+          impressions: row.impressions ?? 0,
+          clicks: row.clicks ?? 0
+        }));
 
         results.push({ keyword, rankings });
       } catch (error) {
@@ -367,7 +354,7 @@ export class KeywordsResearchTool {
     keywordDensity: Record<string, number>;
     internalLinkOpportunities: string[];
   }> {
-    // This would typically use Claude AI to generate the brief
+    // This would typically use an AI assistant to generate the brief
     // For now, returning a structured template
     
     return {
@@ -401,19 +388,62 @@ export class KeywordsResearchTool {
 
 export type KeywordResearchResult = KeywordData;
 
+export interface ResearchKeywordsOptions {
+  seedKeywords?: string[];
+  topic?: string;
+  targetAudience?: string;
+  siteUrl?: string;
+  gscCredentials?: KeywordResearchConfig['gscCredentials'];
+  aiAssistantKey?: string;
+  serpApiKey?: string;
+}
+
 export async function researchKeywords(
   topic: string,
   targetAudience: string,
+  config?: Partial<KeywordResearchConfig>
+): Promise<KeywordResearchResult[]>;
+export async function researchKeywords(
+  options: ResearchKeywordsOptions
+): Promise<KeywordResearchResult[]>;
+export async function researchKeywords(
+  topicOrOptions: string | ResearchKeywordsOptions,
+  targetAudience = 'developers and marketers',
   config: Partial<KeywordResearchConfig> = {}
 ): Promise<KeywordResearchResult[]> {
+  if (typeof topicOrOptions === 'string') {
+    const tool = new KeywordsResearchTool({
+      siteUrl: config.siteUrl || 'https://example.com',
+      gscCredentials: config.gscCredentials,
+      aiAssistantKey: config.aiAssistantKey,
+      serpApiKey: config.serpApiKey
+    });
+
+    return tool.researchKeywordsWithAI(topicOrOptions, targetAudience);
+  }
+
+  const {
+    seedKeywords = [],
+    topic,
+    targetAudience: audience,
+    siteUrl,
+    gscCredentials,
+    aiAssistantKey,
+    serpApiKey
+  } = topicOrOptions;
+
+  const derivedTopic =
+    topic || (seedKeywords.length > 0 ? seedKeywords.join(', ') : 'gtm as code strategy');
+  const derivedAudience = audience || targetAudience;
+
   const tool = new KeywordsResearchTool({
-    siteUrl: config.siteUrl || 'https://example.com',
-    gscCredentials: config.gscCredentials,
-    claudeApiKey: config.claudeApiKey,
-    serpApiKey: config.serpApiKey
+    siteUrl: siteUrl || config.siteUrl || 'https://example.com',
+    gscCredentials: gscCredentials || config.gscCredentials,
+    aiAssistantKey: aiAssistantKey || config.aiAssistantKey,
+    serpApiKey: serpApiKey || config.serpApiKey
   });
 
-  return tool.researchKeywordsWithAI(topic, targetAudience);
+  return tool.researchKeywordsWithAI(derivedTopic, derivedAudience);
 }
 
 // Utility functions for keyword analysis

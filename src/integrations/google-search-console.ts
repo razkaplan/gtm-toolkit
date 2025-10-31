@@ -1,8 +1,8 @@
 // Google Search Console Integration for Performance Tracking
 
-import { google } from 'googleapis';
+import { google, searchconsole_v1 } from 'googleapis';
 import { GoogleAuth } from 'google-auth-library';
-import axios from 'axios';
+import { writeFileSync } from 'fs';
 
 interface GSCCredentials {
   client_email: string;
@@ -78,7 +78,7 @@ interface KeywordPerformanceReport {
 
 export class GoogleSearchConsoleClient {
   private auth!: GoogleAuth;
-  private searchConsole: any;
+  private searchConsole!: searchconsole_v1.Searchconsole;
   private siteUrl: string;
   private isInitialized = false;
 
@@ -99,7 +99,7 @@ export class GoogleSearchConsoleClient {
       
       this.searchConsole = google.searchconsole({
         version: 'v1',
-        auth: this.auth
+        auth: this.auth as any
       });
       
       this.isInitialized = true;
@@ -126,10 +126,12 @@ export class GoogleSearchConsoleClient {
         siteUrl: this.siteUrl
       });
 
+      const siteData = response.data as Partial<{ verificationMethod: string; verificationDate: string }>;
+
       return {
         verified: true,
-        verificationMethod: response.data.verificationMethod || 'unknown',
-        verificationDate: response.data.verificationDate
+        verificationMethod: siteData.verificationMethod ?? 'unknown',
+        verificationDate: siteData.verificationDate ?? undefined
       };
     } catch (error) {
       console.error('Site verification failed:', error);
@@ -160,19 +162,28 @@ export class GoogleSearchConsoleClient {
         }
       });
 
-      const rows = response.data.rows || [];
-      const totalClicks = rows.reduce((sum: number, row: any) => sum + row.clicks, 0);
-      const totalImpressions = rows.reduce((sum: number, row: any) => sum + row.impressions, 0);
+      const rows = (response.data.rows ?? []) as searchconsole_v1.Schema$ApiDataRow[];
+      const performanceRows: PerformanceData[] = rows.map(row => ({
+        keys: row.keys ?? [],
+        clicks: row.clicks ?? 0,
+        impressions: row.impressions ?? 0,
+        ctr: row.ctr ?? 0,
+        position: row.position ?? 0
+      }));
+
+      const totalClicks = performanceRows.reduce((sum, row) => sum + row.clicks, 0);
+      const totalImpressions = performanceRows.reduce((sum, row) => sum + row.impressions, 0);
       const averageCTR = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
-      const averagePosition = rows.length > 0 ? 
-        rows.reduce((sum: number, row: any) => sum + row.position, 0) / rows.length : 0;
+      const averagePosition = performanceRows.length > 0
+        ? performanceRows.reduce((sum, row) => sum + row.position, 0) / performanceRows.length
+        : 0;
 
       return {
         totalClicks,
         totalImpressions,
         averageCTR,
         averagePosition,
-        data: rows,
+        data: performanceRows,
         period: {
           startDate: query.startDate,
           endDate: query.endDate
@@ -294,13 +305,22 @@ export class GoogleSearchConsoleClient {
         });
 
         const result = response.data.inspectionResult;
+        const indexStatusResult = result?.indexStatusResult;
+
+        const coverageState = (indexStatusResult?.coverageState ?? 'Error') as IndexingStatus['coverageState'];
+        const pageFetchState = (indexStatusResult?.pageFetchState ?? 'Server error') as IndexingStatus['pageFetchState'];
+        const indexingState = (indexStatusResult?.indexingState ?? 'Blocked by robots.txt') as IndexingStatus['indexingState'];
+        const googleCanonical = indexStatusResult?.googleCanonical ?? undefined;
+        const userCanonical = indexStatusResult?.userCanonical ?? undefined;
+        const lastCrawlTime = indexStatusResult?.lastCrawlTime ?? undefined;
+
         indexingStatus.set(url, {
-          coverageState: result.indexStatusResult?.coverageState || 'Error',
-          pageFetchState: result.indexStatusResult?.pageFetchState || 'Server error',
-          googleCanonical: result.indexStatusResult?.googleCanonical,
-          userCanonical: result.indexStatusResult?.userCanonical,
-          indexingState: result.indexStatusResult?.indexingState || 'Blocked by robots.txt',
-          lastCrawlTime: result.indexStatusResult?.lastCrawlTime
+          coverageState,
+          pageFetchState,
+          googleCanonical,
+          userCanonical,
+          indexingState,
+          lastCrawlTime
         });
 
         // Respect rate limits
@@ -372,7 +392,7 @@ export class GoogleSearchConsoleClient {
   }
 
   // Get mobile usability issues
-  async getMobileUsabilityIssues(): Promise<any[]> {
+  async getMobileUsabilityIssues(): Promise<string[]> {
     if (!this.isInitialized) {
       throw new Error('Google Search Console client not initialized');
     }
@@ -481,7 +501,7 @@ export class GoogleSearchConsoleClient {
 
     try {
       const response = await this.searchConsole.sites.list();
-      return response.data.siteEntry?.map((site: any) => site.siteUrl) || [];
+      return response.data.siteEntry?.map(site => site.siteUrl ?? '').filter(Boolean) ?? [];
     } catch (error) {
       console.error('Failed to fetch sites list:', error);
       return [];
@@ -492,10 +512,10 @@ export class GoogleSearchConsoleClient {
   exportToCSV(data: PerformanceData[], filename?: string): string {
     const headers = ['Query', 'Clicks', 'Impressions', 'CTR', 'Position'];
     const csvData = [headers.join(',')];
-    
+
     data.forEach(row => {
       const csvRow = [
-        `"${row.keys[0]}"`,
+        `"${row.keys[0] ?? ''}"`,
         row.clicks.toString(),
         row.impressions.toString(),
         (row.ctr * 100).toFixed(2) + '%',
@@ -503,15 +523,72 @@ export class GoogleSearchConsoleClient {
       ];
       csvData.push(csvRow.join(','));
     });
-    
+
     const csv = csvData.join('\n');
-    
+
     if (filename) {
-      require('fs').writeFileSync(filename, csv, 'utf8');
+      writeFileSync(filename, csv, 'utf8');
       console.log(`Data exported to: ${filename}`);
     }
-    
+
     return csv;
+  }
+
+  async exportAiOverviewKeywords(options: {
+    outputPath: string;
+    startDate?: string;
+    endDate?: string;
+    regex?: string;
+    rowLimit?: number;
+  }): Promise<void> {
+    if (!this.isInitialized) {
+      throw new Error('Google Search Console client not initialized');
+    }
+
+    const endDate = options.endDate || new Date().toISOString().split('T')[0];
+    const startDate = options.startDate || new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const regex = options.regex || '(?i)((^|\\s)(who|what|when|where|why|how|does|do|can|should|is|are|will|did)\\b.*)|(.*\\b(vs|versus|difference between|compare|comparison)\\b.*)|(.*\\b(ai overview|ai overview:|overview|summary|definition|meaning)\\b.*)|(.*\\b(chatgpt|gemini|bard|copilot|perplexity|claude)\\b.*)';
+
+    const response = await this.searchConsole.searchanalytics.query({
+      siteUrl: this.siteUrl,
+      requestBody: {
+        startDate,
+        endDate,
+        dimensions: ['query', 'page'],
+        dimensionFilterGroups: [
+          {
+            groupType: 'and',
+            filters: [
+              {
+                dimension: 'query',
+                operator: 'includingRegex',
+                expression: regex
+              }
+            ]
+          }
+        ],
+        rowLimit: options.rowLimit || 1000
+      }
+    });
+
+    const rows = response.data.rows || [];
+    const header = ['Query', 'Landing Page', 'Clicks', 'Impressions', 'CTR', 'Position'];
+    const csvLines = [header.join(',')];
+
+    rows.forEach(row => {
+      const [query = '', page = ''] = row.keys || [];
+      const ctrPercent = ((row.ctr || 0) * 100).toFixed(2) + '%';
+      csvLines.push([
+        `"${query.replace(/"/g, '""')}"`,
+        `"${page.replace(/"/g, '""')}"`,
+        row.clicks || 0,
+        row.impressions || 0,
+        ctrPercent,
+        (row.position || 0).toFixed(2)
+      ].join(','));
+    });
+
+    writeFileSync(options.outputPath, csvLines.join('\n'), 'utf8');
   }
 }
 

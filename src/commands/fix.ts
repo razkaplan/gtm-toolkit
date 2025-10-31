@@ -14,11 +14,21 @@ interface FixExecutionResult {
   skipped: FixSuggestion[];
 }
 
+interface FixCommandOptions {
+  plan: string;
+  auto?: boolean;
+  confidence: string;
+  priority: string;
+  dryRun?: boolean;
+  backup?: boolean;
+  interactive?: boolean;
+}
+
 export function createFixCommand(): Command {
   const cmd = new Command('fix');
 
   cmd
-    .description('Apply Claude AI-suggested fixes with user confirmation')
+    .description('Apply AI-suggested fixes with user confirmation')
     .argument('[path]', 'Content directory to fix', 'content/')
     .option('--plan <file>', 'Use existing execution plan file', 'fix-execution-plan.md')
     .option('--auto', 'Apply fixes automatically without confirmation')
@@ -27,7 +37,7 @@ export function createFixCommand(): Command {
     .option('--dry-run', 'Show what would be changed without applying fixes')
     .option('--backup', 'Create backup of files before applying fixes')
     .option('--interactive', 'Review each fix individually')
-    .action(async (contentPath: string, options) => {
+    .action(async (contentPath: string, options: FixCommandOptions) => {
       try {
         let executionPlan: ExecutionPlan;
 
@@ -66,7 +76,7 @@ export function createFixCommand(): Command {
 
         // Get user confirmation
         if (!options.auto) {
-          const shouldProceed = await confirmExecution(eligibleFixes, options.interactive);
+          const shouldProceed = await confirmExecution(eligibleFixes, Boolean(options.interactive));
           if (!shouldProceed) {
             console.log(chalk.yellow('❌ Execution cancelled by user'));
             process.exit(0);
@@ -79,7 +89,7 @@ export function createFixCommand(): Command {
         }
 
         // Execute fixes
-        const results = await executeFixes(eligibleFixes, options.interactive);
+        const results = await executeFixes(eligibleFixes);
 
         // Display results
         displayExecutionResults(results);
@@ -114,10 +124,7 @@ async function generateNewExecutionPlan(contentPath: string): Promise<ExecutionP
     extensions: config.content?.extensions || ['.md', '.mdx']
   });
 
-  const generator = new FixSuggestionsGenerator({
-    apiKey: config.ai?.apiKey || process.env.CLAUDE_API_KEY,
-    model: config.ai?.model
-  });
+  const generator = new FixSuggestionsGenerator();
 
   return await generator.generateFixSuggestions(contentFiles);
 }
@@ -128,6 +135,7 @@ function displayExecutionSummary(plan: ExecutionPlan): void {
   console.log(chalk.green(`✅ Auto-fixable: ${plan.summary.autoFixableIssues}`));
   console.log(chalk.yellow(`👨‍💻 Manual review: ${plan.summary.manualReviewIssues}`));
   console.log(chalk.blue(`⏱️  Total time: ${plan.summary.estimatedTotalTime}`));
+  console.log(chalk.gray('\n🧠 Manual fixes include ready-made prompts for local assistants (Copilot, Cursor, Claude Desktop, Gemini, etc.). Paste them into your tooling to speed up rewrites.'));
 }
 
 function filterFixes(fixes: FixSuggestion[], criteria: {
@@ -257,7 +265,7 @@ async function createBackups(fixes: FixSuggestion[]): Promise<void> {
   spinner.succeed(`Backups created in ${backupDir}`);
 }
 
-async function executeFixes(fixes: FixSuggestion[], interactive: boolean): Promise<FixExecutionResult> {
+async function executeFixes(fixes: FixSuggestion[]): Promise<FixExecutionResult> {
   const spinner = ora('Applying fixes...').start();
 
   const results: FixExecutionResult = {
@@ -348,16 +356,35 @@ function displayExecutionResults(results: FixExecutionResult): void {
 }
 
 async function generatePostExecutionReport(results: FixExecutionResult, originalPlan: ExecutionPlan): Promise<void> {
+  const totalAttempted = results.applied.length + results.failed.length;
+  const successRate = totalAttempted > 0
+    ? Math.round((results.applied.length / totalAttempted) * 100)
+    : 0;
+
+  const recommendationsSection = originalPlan.recommendations.length > 0
+    ? originalPlan.recommendations.map(rec => `- ${rec}`).join('\n')
+    : '- No additional recommendations recorded.';
+
+  const nextStepsSection = originalPlan.nextSteps.length > 0
+    ? originalPlan.nextSteps.map(step => `- ${step}`).join('\n')
+    : '- No next steps recorded.';
+
   const reportContent = `# GTM Toolkit - Fix Execution Report
 
 *Generated on ${new Date().toLocaleString()}*
 
 ## Execution Summary
 
-- **Total Fixes Attempted:** ${results.applied.length + results.failed.length}
+- **Total Fixes Attempted:** ${totalAttempted}
 - **Successfully Applied:** ${results.applied.length}
 - **Failed:** ${results.failed.length}
-- **Success Rate:** ${Math.round((results.applied.length / (results.applied.length + results.failed.length)) * 100)}%
+- **Success Rate:** ${successRate}%
+
+## Plan Overview
+
+- **Auto-fixable Issues in Plan:** ${originalPlan.summary.autoFixableIssues}
+- **Manual Review Issues in Plan:** ${originalPlan.summary.manualReviewIssues}
+- **Estimated Total Time:** ${originalPlan.summary.estimatedTotalTime}
 
 ## Applied Fixes
 
@@ -380,11 +407,20 @@ ${results.failed.map(fix => `
 `).join('\n')}
 ` : ''}
 
+## Recommendations
+
+${recommendationsSection}
+
 ## Next Steps
 
-1. Run \`gtm-toolkit audit\` to verify improvements
-2. Review any failed fixes manually
-3. Consider running \`gtm-toolkit suggestions\` again for remaining issues
+${nextStepsSection}
+
+${results.failed.length > 0 ? `
+## Manual Follow-up Required
+
+- Review failed fixes and apply changes manually.
+- Consider generating a new execution plan after manual updates.
+` : ''}
 
 ---
 

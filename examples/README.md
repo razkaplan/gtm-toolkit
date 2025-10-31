@@ -11,7 +11,7 @@ This directory contains usage examples for GTM Toolkit. These are the only imple
 npm install -g gtm-toolkit
 
 # Initialize in your project
-gtm-toolkit init --ai --tracking
+gtm-toolkit init --framework nextjs
 ```
 
 ### 2. Content Linting
@@ -55,21 +55,17 @@ const sitemap = await generateSitemap({
 });
 ```
 
-### 4. Claude AI Content Optimization
+### 4. AI Content Optimization (optional)
 
 ```javascript
-import { ClaudeContentOptimizer } from 'gtm-toolkit';
+import { createContentAnalysisInstruction } from 'gtm-toolkit';
 
-const optimizer = new ClaudeContentOptimizer({
-  apiKey: process.env.CLAUDE_API_KEY
-});
-
-const analysis = await optimizer.analyzeContent(content, {
+const instruction = createContentAnalysisInstruction(content, {
   targetKeywords: ['seo', 'optimization'],
   targetAudience: 'developers'
 });
 
-console.log('Optimization suggestions:', analysis.suggestions);
+console.log('Prompt for your local assistant:', instruction.prompt);
 ```
 
 ### 5. CLI Usage Examples
@@ -88,7 +84,7 @@ gtm-toolkit fix --auto --confidence high
 gtm-toolkit generate --all
 
 # Full audit with AI analysis
-gtm-toolkit audit --comprehensive --ai
+gtm-toolkit audit --all
 
 # Performance tracking
 gtm-toolkit track --schedule weekly
@@ -108,8 +104,8 @@ module.exports = {
     rules: { enabled: 'all' }
   },
   ai: {
-    provider: 'claude',
-    model: 'claude-3-sonnet-20240229',
+    assistant: 'local-ai',
+    notes: 'Use toolkit prompts with your assistant',
     features: {
       contentAnalysis: true,
       autoFix: true
@@ -187,7 +183,7 @@ jobs:
       - name: Run SEO audit
         run: gtm-toolkit audit --format github
         env:
-          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+          AI_ASSISTANT_KEY: ${{ secrets.AI_ASSISTANT_KEY || 'not-set' }}
 
       - name: Generate SEO files
         run: gtm-toolkit generate --all

@@ -46,7 +46,7 @@ program
 
 program
   .command('analyze')
-  .description('Analyze content and competitors using Claude Code')
+  .description('Analyze content and competitors using AI-driven workflows')
   .option('-c, --competitor <url>', 'analyze competitor site')
   .option('-g, --gaps', 'find content gaps')
   .option('-k, --keywords <topic>', 'research keywords for a topic')

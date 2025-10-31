@@ -1,20 +1,22 @@
 # GTM Toolkit 🚀
 
-**The first developer-native marketing automation platform** that bridges code and campaigns, powered by Claude AI for intelligent content optimization.
+**The first developer-native marketing automation platform** created by Raz Kaplan, bridging code and campaigns with optional AI integrations for intelligent content optimization.
 
 [![npm version](https://badge.fury.io/js/gtm-toolkit.svg)](https://badge.fury.io/js/gtm-toolkit)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Claude AI](https://img.shields.io/badge/Claude-AI-orange)](https://claude.ai)
+[![AI Ready](https://img.shields.io/badge/AI-Ready-blue)](https://www.gtmascode.dev/docs)
 
-> Transform your marketing workflow with Git-based campaigns, AI-powered content optimization, and automated SEO compliance.
+*Created and maintained by [Raz Kaplan](https://www.gtmascode.dev/).* 
+
+> Transform your marketing workflow with Git-based campaigns, optional AI-powered content optimization, and automated SEO compliance.
 
 ## 🌟 Why GTM Toolkit?
 
 Marketing teams and developers have been working in silos for too long. GTM Toolkit brings **marketing automation into the developer workflow** with:
 
 - **Content as Code**: Version-controlled marketing content with automated validation
-- **AI-Native**: Claude AI integration for intelligent content optimization and competitor analysis
+- **AI-Native**: Optional prompts for local assistants (Copilot, Cursor, Claude Desktop, Gemini, etc.) to drive intelligent content optimization
 - **SEO Guard Rails**: Automated compliance checking with 50+ proven SEO rules
 - **Developer-First**: CLI tools, Git hooks, and CI/CD integration
 - **Framework Agnostic**: Works with Next.js, Nuxt, Astro, or any custom setup
@@ -41,7 +43,7 @@ gtm-toolkit lint content/blog
 ## ✨ Core Features
 
 ### 🧠 AI-Powered Content Optimization
-- **Claude AI integration** for intelligent content analysis and optimization
+- **AI-ready integration layer** for intelligent content analysis and optimization
 - **Competitor analysis** with automated benchmarking
 - **Content gap identification** and strategy generation
 - **Keyword research** with search intent classification
@@ -59,7 +61,7 @@ gtm-toolkit lint content/blog
 - **SEO insights generation** with data-driven recommendations
 
 ### 🤖 Intelligent File Generation
-- **Smart robots.txt** with AI bot controls (GPT, Claude, Bing)
+- **Smart robots.txt** with AI bot controls (GPT, Claude, Gemini, Bing)
 - **Dynamic XML sitemaps** with priority scoring and image support
 - **Framework-specific optimization** for Next.js, Nuxt, Astro
 
@@ -84,11 +86,12 @@ gtm-toolkit lint content/blog/2024-01-01-launch.md
 ```
 
 ### AI-Powered Analysis
+These commands generate prompts you can feed into local assistants such as Copilot, Cursor, or Claude Desktop.
 ```bash
-# Analyze a competitor site (requires CLAUDE_API_KEY)
+# Analyze a competitor site (optional AI prompt)
 gtm-toolkit analyze --competitor https://competitor.com --output competitor.json
 
-# Generate content gap ideas (requires CLAUDE_API_KEY)
+# Generate content gap ideas (optional AI prompt)
 gtm-toolkit analyze --gaps
 
 # Research keywords with AI assistance
@@ -122,9 +125,9 @@ const report = await client.generateSEOInsights({ days: 30 });
 | `gtm-toolkit init` | Detects your framework, scaffolds `gtm.config.js`, and optionally installs recommended dependencies. |
 | `gtm-toolkit generate` | Writes `robots.txt`, `sitemap.xml`, and other SEO scaffolding for your framework. |
 | `gtm-toolkit lint` | Runs the 50+ SEO guard rails against Markdown content with console or JSON output. |
-| `gtm-toolkit analyze` | Triggers Claude-powered competitor, keyword, and gap analysis helpers. |
-| `gtm-toolkit suggestions` | Builds an execution plan combining lint findings with AI recommendations. |
-| `gtm-toolkit fix` | Applies auto-fixable issues from a plan, optionally reviewing each change interactively. |
+| `gtm-toolkit analyze` | Generates competitor, gap, and keyword prompts for local AI assistants. |
+| `gtm-toolkit suggestions` | Builds an execution plan combining lint findings with prompts for local AI assistants. |
+| `gtm-toolkit fix` | Applies auto-fixable issues from a plan, optionally reviewing each change interactively (includes local-AI prompts). |
 | `gtm-toolkit audit` | Checks content files plus technical assets like `robots.txt` and `sitemap.xml`. |
 
 ## 📦 Programmatic API Highlights
@@ -175,8 +178,8 @@ module.exports = {
     sitemapUrl: 'https://yoursite.com/sitemap.xml'
   },
   ai: {
-    apiKey: process.env.CLAUDE_API_KEY,
-    model: 'claude-3-sonnet-20240229'
+    assistant: 'local-ai',
+    notes: 'Use GTM Toolkit prompts with your preferred local assistant'
   }
 }
 ```
@@ -184,8 +187,8 @@ module.exports = {
 ## 📋 Environment Setup
 
 ```bash
-# Required for Claude AI features (optional)
-CLAUDE_API_KEY=your_claude_api_key
+# Required for AI-powered features (optional)
+AI_ASSISTANT_KEY=optional_local_assistant_token
 
 # Required for Google Search Console integration (optional)
 GOOGLE_SEARCH_CONSOLE_CREDENTIALS=path/to/credentials.json
@@ -265,7 +268,7 @@ jobs:
       - name: Run SEO Linting
         run: gtm-toolkit lint --changed --format github
         env:
-          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+          AI_ASSISTANT_KEY: ${{ secrets.AI_ASSISTANT_KEY || 'not-set' }}
 ```
 
 ### Git Hooks
@@ -284,7 +287,7 @@ GTM Toolkit provides comprehensive SEO and content performance monitoring throug
 ## 🌍 Integrations
 
 ### Built-in Integrations
-- ✅ **Claude AI** - Intelligent content analysis and optimization
+- ✅ **AI-Ready Integrations** - Intelligent content analysis and optimization
 - ✅ **Google Search Console** - Performance tracking, keyword research, and indexing status
 - ✅ **GitHub Actions** - CI/CD workflow integration
 
@@ -315,6 +318,10 @@ gtm-toolkit benchmark --compare-competitors
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
+## 📣 Attribution Requirement
+
+This project is released under the MIT License with attribution. If you use GTM Toolkit in any public project, distribution, or documentation, please include a credit linking back to [Raz Kaplan](https://www.gtmascode.dev/) or [Raz Kaplan on LinkedIn](https://www.linkedin.com/in/razkaplan/).
+
 ### Development Setup
 ```bash
 git clone https://github.com/razkaplan/gtm-toolkit.git
@@ -333,7 +340,7 @@ npm run test:e2e        # End-to-end tests
 ## 📊 Roadmap
 
 ### v0.1.0 - Current Release ✅
-- ✅ Claude AI integration for content optimization
+- ✅ AI-ready integration layer for content optimization
 - ✅ 50+ SEO rules with automated linting
 - ✅ Google Search Console integration
 - ✅ Smart robots.txt and sitemap generation
@@ -365,7 +372,7 @@ GTM Toolkit is actively developed with community input. Future enhancements will
 
 ## 🏆 Success Stories
 
-> \"GTM Toolkit reduced our content creation time by 60% while improving our average SEO score by 40%. The Claude AI integration is game-changing for content optimization.\"
+> \"GTM Toolkit reduced our content creation time by 60% while improving our average SEO score by 40%. The AI-ready integration layer is game-changing for content optimization.\"
 > — **Leading Developer Tools Company**
 
 > \"Finally, a marketing tool that speaks developer language. Our entire go-to-market process is now in Git with automated quality gates.\"

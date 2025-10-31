@@ -1,10 +1,10 @@
-# GTM Toolkit - Complete Claude-Powered Workflow Demo
+# GTM Toolkit - Complete AI Workflow Demo (Claude example)
 
-This document demonstrates the complete workflow from content analysis to fix execution with Claude AI.
+This document demonstrates the complete workflow from content analysis to fix execution with optional AI integrations (shown here with Claude).
 
 ## 🚀 Complete Workflow Example
 
-### Step 1: Generate Claude-Powered Fix Suggestions
+### Step 1: Generate AI-Powered Fix Suggestions
 
 ```bash
 # Generate comprehensive execution plan with Claude AI analysis
@@ -32,7 +32,7 @@ gtm-toolkit suggestions content/blog/ --output optimization-plan.md
 
 ### Step 2: Review the Generated Execution Plan
 
-Claude AI generates a comprehensive markdown plan:
+A local AI assistant generates a comprehensive markdown plan:
 
 ```markdown
 # GTM Toolkit - Content Optimization Execution Plan
@@ -127,14 +127,14 @@ gtm-toolkit audit --compare baseline.json
 # ✅ 15 issues resolved successfully
 ```
 
-## 🎯 Real Claude AI Analysis Output
+## 🎯 Real Local AI Assistant Analysis Output
 
 Here's an example of what Claude AI generates for actual content:
 
 ### Analysis for "GTM as Code Part 1"
 
 ```markdown
-🤖 **Claude AI Analysis:**
+🤖 **Local AI Assistant Analysis:**
 
 **Content Quality Score: 87/100**
 - Well-structured technical content with clear examples
@@ -182,7 +182,7 @@ echo "✅ Baseline established"
 
 # 2. Generate Claude-powered suggestions
 gtm-toolkit suggestions content/ --output optimization-plan.md
-echo "✅ Claude AI analysis complete"
+echo "✅ Local AI analysis complete"
 
 # 3. Apply high-confidence automatic fixes
 gtm-toolkit fix --auto --confidence high --backup
@@ -204,7 +204,7 @@ echo "📈 Check improvement-report.md for results"
 ## 🎯 User Experience Summary
 
 1. **Single Command Analysis**: `gtm-toolkit suggestions content/`
-2. **Claude AI Generates**: Comprehensive execution plan with specific fixes
+2. **Local AI Assistant Generates**: Comprehensive execution plan with specific fixes
 3. **User Confirms**: Review and approve fixes before execution
 4. **Automatic Application**: High-confidence fixes applied instantly
 5. **Manual Review**: Interactive confirmation for complex changes
@@ -218,4 +218,4 @@ echo "📈 Check improvement-report.md for results"
 - ✅ **User Confirmation**: No changes applied without explicit approval
 - ✅ **Dry-run Mode**: Preview all changes before execution
 
-This workflow demonstrates GTM Toolkit as a world-class open-source library with enterprise-grade Claude AI integration while maintaining complete security and user control.
+This workflow demonstrates GTM Toolkit as a world-class open-source library with enterprise-grade local AI assistant integration while maintaining complete security and user control.

@@ -11,6 +11,11 @@ export interface GTMConfig {
       host: string;
       enabled: boolean;
     };
+    gsc?: {
+      credentialsPath?: string;
+      siteUrl?: string;
+      enabled: boolean;
+    };
   };
   seo: {
     siteName: string;
@@ -138,7 +143,7 @@ export interface ContentAnalysis {
   images: Array<{ src: string; alt: string; title?: string }>;
 }
 
-// Claude integration types
+// AI integration types
 export interface CompetitorAnalysis {
   url: string;
   title: string;

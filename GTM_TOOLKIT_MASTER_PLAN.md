@@ -1,7 +1,7 @@
 # GTM Toolkit: World-Class Continuous Marketing Library - Master Plan
 
 ## Vision Statement
-The first **developer-native marketing automation platform** that bridges code and campaigns, powered by Claude Code AI for intelligent content optimization, competitor analysis, and automated marketing workflows.
+The first **developer-native marketing automation platform** that bridges code and campaigns, created by Raz Kaplan with optional AI integrations for intelligent content optimization, competitor analysis, and automated marketing workflows.
 
 ## Core Architecture Philosophy
 - **Content as Code**: Markdown-based, version-controlled, with automated validation
@@ -19,7 +19,7 @@ The first **developer-native marketing automation platform** that bridges code a
 @gtm-toolkit/content        # Content management system
 @gtm-toolkit/analytics      # Analytics integration
 @gtm-toolkit/adapters       # Framework adapters
-@gtm-toolkit/ai             # Claude Code AI integration
+@gtm-toolkit/ai             # Optional AI integration layer
 @gtm-toolkit/templates      # Starter templates
 ```
 
@@ -31,11 +31,11 @@ The first **developer-native marketing automation platform** that bridges code a
 @gtm-toolkit/plugin-discord     # Discord community
 ```
 
-## Claude Code AI Integration Layer
+## AI Integration Layer
 
 ### 1. Intelligent Content Engine
 ```typescript
-interface ClaudeIntegration {
+interface AIIntegration {
   // Content Analysis & Generation
   analyzeContent(content: string): Promise<ContentAnalysis>;
   generateSEOOptimizedContent(brief: ContentBrief): Promise<GeneratedContent>;
@@ -55,16 +55,9 @@ interface ClaudeIntegration {
 
 ### 2. AI-Powered Quality Gates
 ```typescript
-export class ClaudeSEOLinter {
-  async validateContent(file: string): Promise<ValidationReport> {
-    const analysis = await this.claude.analyzeContent(file);
-    return {
-      seoScore: analysis.seoScore,
-      readabilityScore: analysis.readability,
-      keywordDensity: analysis.keywords,
-      recommendations: analysis.suggestions,
-      autoFixes: analysis.quickFixes
-    };
+export class AISEOLinter {
+  buildPrompt(filePath: string, draft: string): LocalAIInstruction {
+    return createContentAnalysisInstruction(draft, { targetAudience: 'core GTM users' });
   }
 }
 ```
@@ -72,9 +65,9 @@ export class ClaudeSEOLinter {
 ## Implementation Roadmap
 
 ### Phase 1: Foundation (Weeks 1-4)
-**Priority 1: Core engine with Claude integration**
+**Priority 1: Core engine with AI integration**
 - Implement SEORuleEngine with Raz's guard rails from raz-kaplan-website
-- Build ClaudeMarketingClient with specialized prompts
+- Build AI marketing client with specialized prompts
 - Create ContentPipeline with AI-powered stages
 - Add real-time content scoring
 - Implement basic CLI commands
@@ -115,7 +108,7 @@ Based on Raz's website analysis, the SEO module must include:
 - Keyword difficulty analysis
 - Search volume data
 - Competitor keyword analysis
-- Claude AI-powered keyword suggestions
+- AI-powered keyword suggestions
 
 ### 3. Robot.txt & Sitemap Generation
 - Dynamic robots.txt generation with AI bot controls
@@ -132,7 +125,7 @@ Based on Raz's website analysis, the SEO module must include:
 
 ## Unique Selling Points
 1. **Developer-First Marketing**: Git-based workflows for marketing content
-2. **AI-Native Architecture**: Claude Code integration for intelligent optimization
+2. **AI-Native Architecture**: Optional AI integration for intelligent optimization
 3. **Quality-First Approach**: Proven SEO guard rails as foundation
 4. **Framework Agnostic**: Works with any tech stack
 
@@ -147,7 +140,7 @@ Based on Raz's website analysis, the SEO module must include:
 1. **IMMEDIATE**: Implement advanced SEO linter with keywords research
 2. Create robot.txt & sitemap generators
 3. Build Google Search Console connector
-4. Integrate Claude Code AI for content optimization
+4. Integrate AI services for content optimization
 5. Develop CLI interface with AI superpowers
 
 ---

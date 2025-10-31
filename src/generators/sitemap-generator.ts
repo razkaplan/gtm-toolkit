@@ -1,7 +1,7 @@
 // Intelligent XML Sitemap Generator with Priority Scoring
 
-import { writeFileSync, readdirSync, statSync, existsSync } from 'fs';
-import { join, extname } from 'path';
+import { writeFileSync, readdirSync, statSync, existsSync, readFileSync } from 'fs';
+import { join } from 'path';
 import { GTMConfig } from '../types';
 import matter from 'gray-matter';
 
@@ -37,6 +37,12 @@ interface ContentMetadata {
   wordCount: number;
 }
 
+interface SitemapValidationStats {
+  urlCount: number;
+  sizeInMB: string;
+  hasImages: boolean;
+}
+
 export class SitemapGenerator {
   private config: GTMConfig;
   private sitemapConfig: SitemapConfig;
@@ -70,9 +76,9 @@ export class SitemapGenerator {
     }
     
     // Add content pages (blog, services, projects)
-    if (options.contentPath || this.config.content?.contentPath) {
-      const contentPath = options.contentPath || this.config.content?.contentPath!;
-      const contentEntries = await this.generateContentPages(contentPath);
+    const resolvedContentPath = options.contentPath ?? this.config.content?.contentPath;
+    if (resolvedContentPath) {
+      const contentEntries = await this.generateContentPages(resolvedContentPath);
       entries.push(...contentEntries);
     }
     
@@ -197,7 +203,7 @@ export class SitemapGenerator {
   // Extract content metadata
   private async extractContentMetadata(filePath: string): Promise<ContentMetadata> {
     try {
-      const fileContent = require('fs').readFileSync(filePath, 'utf8');
+      const fileContent = readFileSync(filePath, 'utf8');
       const { data: frontmatter, content } = matter(fileContent);
       const stats = statSync(filePath);
       
@@ -221,13 +227,20 @@ export class SitemapGenerator {
 
   // Generate slug from filename and metadata
   private generateSlug(filename: string, metadata: ContentMetadata): string {
-    // Remove extension
-    let slug = filename.replace(/\.(md|mdx)$/, '');
-    
-    // Remove date prefix if present (YYYY-MM-DD-)
-    slug = slug.replace(/^\d{4}-\d{2}-\d{2}-/, '');
-    
-    return slug;
+    const baseFromFilename = filename
+      .replace(/\.(md|mdx)$/, '')
+      .replace(/^\d{4}-\d{2}-\d{2}-/, '');
+
+    const source = metadata.title
+      ? metadata.title
+      : baseFromFilename;
+
+    return source
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/^-+|-+$/g, '');
   }
 
   // Calculate content priority based on metadata
@@ -333,7 +346,7 @@ export class SitemapGenerator {
   // Extract images from content
   private async extractImages(filePath: string): Promise<SitemapImage[]> {
     try {
-      const content = require('fs').readFileSync(filePath, 'utf8');
+      const content = readFileSync(filePath, 'utf8');
       const { data: frontmatter, content: body } = matter(content);
       const images: SitemapImage[] = [];
       
@@ -483,7 +496,7 @@ export class SitemapGenerator {
   }
 
   // Validate sitemap XML
-  validateSitemap(xml: string): { isValid: boolean; errors: string[]; warnings: string[]; stats: any } {
+  validateSitemap(xml: string): { isValid: boolean; errors: string[]; warnings: string[]; stats: SitemapValidationStats } {
     const errors: string[] = [];
     const warnings: string[] = [];
     
@@ -509,7 +522,7 @@ export class SitemapGenerator {
     }
     
     // Check file size (approximate)
-    const sizeInMB = new Blob([xml]).size / 1024 / 1024;
+    const sizeInMB = Buffer.byteLength(xml, 'utf8') / 1024 / 1024;
     if (sizeInMB > 50) {
       errors.push(`Sitemap too large: ${sizeInMB.toFixed(2)}MB (max 50MB)`);
     }

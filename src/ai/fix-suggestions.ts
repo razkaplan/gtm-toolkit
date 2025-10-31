@@ -1,4 +1,4 @@
-import { ClaudeContentOptimizer, type OptimizationSuggestion } from './claude-integration';
+import { createFixSuggestionInstruction } from './claude-integration';
 import { lintContent, type SEOLintResult } from '../core/seo-rules';
 import { ContentFile } from '../types';
 import fs from 'fs-extra';
@@ -34,20 +34,7 @@ export interface ExecutionPlan {
 }
 
 export class FixSuggestionsGenerator {
-  private claudeOptimizer?: ClaudeContentOptimizer;
-  private readonly hasAI: boolean;
-
-  constructor(options: { apiKey?: string; model?: string } = {}) {
-    const apiKey = options.apiKey || process.env.CLAUDE_API_KEY;
-    this.hasAI = Boolean(apiKey);
-
-    if (apiKey) {
-      this.claudeOptimizer = new ClaudeContentOptimizer({
-        apiKey,
-        model: options.model || 'claude-3-sonnet-20240229'
-      });
-    }
-  }
+  constructor() {}
 
   async generateFixSuggestions(
     contentFiles: ContentFile[],
@@ -59,7 +46,6 @@ export class FixSuggestionsGenerator {
   ): Promise<ExecutionPlan> {
     const {
       includeAISuggestions = true,
-      maxSuggestionsPerFile = 10,
       focusAreas = ['seo', 'content', 'structure']
     } = options;
 
@@ -79,9 +65,9 @@ export class FixSuggestionsGenerator {
         allFixes.push(...lintFixes);
 
         // Generate AI-powered suggestions if enabled
-        if (includeAISuggestions && this.claudeOptimizer && this.hasAI) {
-          const aiSuggestions = await this.generateAISuggestions(file, focusAreas);
-          allFixes.push(...aiSuggestions.slice(0, maxSuggestionsPerFile));
+        if (includeAISuggestions) {
+          const aiSuggestion = this.generateAIInstructionSuggestion(file, focusAreas);
+          allFixes.push(aiSuggestion);
         }
       } catch (error) {
         console.warn(`Error processing file ${file.path}:`, error);
@@ -122,57 +108,26 @@ export class FixSuggestionsGenerator {
       });
   }
 
-  private async generateAISuggestions(
-    file: ContentFile,
-    focusAreas: string[]
-  ): Promise<FixSuggestion[]> {
-    if (!this.claudeOptimizer || !this.hasAI) {
-      return [];
-    }
+  private generateAIInstructionSuggestion(file: ContentFile, focusAreas: string[]): FixSuggestion {
+    const snippet = file.content.slice(0, 1500);
+    const instruction = createFixSuggestionInstruction(file.path, snippet, focusAreas);
+    const combinedSuggestion = [instruction.prompt, '', 'Suggested steps:', ...instruction.suggestedSteps.map(step => `- ${step}`)].join('\n');
 
-    try {
-      const analysis = await this.claudeOptimizer.analyzeContent(file.content, {
-        targetKeywords: this.extractKeywordsFromContent(file.content),
-        targetAudience: 'developers and marketers',
-        analysisType: 'optimization'
-      });
-
-      const suggestions: OptimizationSuggestion[] = analysis.suggestions ||
-        (analysis.recommendations?.map(rec => ({
-          issue: rec.issue,
-          priority: rec.priority,
-          category: rec.category,
-          recommendation: rec.solution,
-          type: 'recommendation',
-          confidence: 0.6,
-          expectedImprovement: 'Moderate SEO improvement'
-        })) as OptimizationSuggestion[] | undefined) || [];
-
-      return suggestions.map((suggestion, index) => {
-        const numericConfidence = suggestion.confidence ?? 0.6;
-        const confidenceLabel = numericConfidence > 0.8 ? 'high' : numericConfidence > 0.6 ? 'medium' : 'low';
-        const impact = suggestion.expectedImprovement || suggestion.recommendation || 'Moderate SEO improvement';
-
-        return {
-          id: `ai-${path.basename(file.path)}-${index}`,
-          file: file.path,
-          issue: suggestion.issue,
-          priority: this.mapAIPriority(suggestion.priority),
-          category: this.mapAICategory(suggestion.type ?? 'recommendation'),
-          suggestion: suggestion.recommendation || 'Review recommended changes',
-          autoFixable: numericConfidence > 0.8 && this.isSimpleTextChange(suggestion),
-          confidence: confidenceLabel,
-          impact,
-          difficulty: this.estimateDifficulty(suggestion),
-          estimatedTime: this.estimateTimeRequired(suggestion),
-          beforeExample: suggestion.currentContent,
-          afterExample: suggestion.suggestedContent
-        };
-      });
-    } catch (error) {
-      console.warn(`AI analysis failed for ${file.path}:`, error);
-      return [];
-    }
+    return {
+      id: `ai-guidance-${path.basename(file.path)}`,
+      file: file.path,
+      issue: instruction.objective,
+      priority: 'medium',
+      category: 'content',
+      suggestion: combinedSuggestion,
+      autoFixable: false,
+      confidence: 'medium',
+      impact: 'Provides structured instructions for your local AI assistant.',
+      difficulty: 'hard',
+      estimatedTime: '20-45 min',
+      beforeExample: snippet,
+      afterExample: undefined
+    };
   }
 
   private prioritizeFixes(fixes: FixSuggestion[]): FixSuggestion[] {
@@ -288,67 +243,11 @@ export class FixSuggestionsGenerator {
   }
 
   private generateBeforeExample(result: SEOLintResult): string | undefined {
-    // This would extract the problematic content based on the rule
-    // For now, return undefined as this would require more context
-    return undefined;
+    return `Current state violates ${result.rule}: ${result.message}`;
   }
 
   private generateAfterExample(result: SEOLintResult): string | undefined {
-    // This would show the corrected content
-    // For now, return undefined as this would require more context
-    return undefined;
-  }
-
-  private extractKeywordsFromContent(content: string): string[] {
-    // Extract keywords from frontmatter and content
-    const matches = content.match(/keywords?:\s*\[([^\]]+)\]/);
-    if (matches) {
-      return matches[1].split(',').map(k => k.trim().replace(/['"]/g, ''));
-    }
-    return [];
-  }
-
-  private mapAIPriority(aiPriority: string): FixSuggestion['priority'] {
-    switch (aiPriority.toLowerCase()) {
-      case 'critical': return 'critical';
-      case 'high': return 'high';
-      case 'medium': return 'medium';
-      default: return 'low';
-    }
-  }
-
-  private mapAICategory(aiType: string): FixSuggestion['category'] {
-    switch (aiType.toLowerCase()) {
-      case 'seo':
-      case 'keyword': return 'seo';
-      case 'readability':
-      case 'content': return 'content';
-      case 'structure':
-      case 'heading': return 'structure';
-      default: return 'technical';
-    }
-  }
-
-  private isSimpleTextChange(suggestion: any): boolean {
-    // Determine if this is a simple text replacement
-    return suggestion.type === 'text_replacement' ||
-           suggestion.type === 'keyword_optimization' ||
-           (suggestion.recommendation && suggestion.recommendation.length < 200);
-  }
-
-  private estimateDifficulty(suggestion: any): FixSuggestion['difficulty'] {
-    if (suggestion.type === 'text_replacement') return 'easy';
-    if (suggestion.type === 'structure_change') return 'hard';
-    return 'medium';
-  }
-
-  private estimateTimeRequired(suggestion: any): string {
-    switch (suggestion.type) {
-      case 'text_replacement': return '2-5 min';
-      case 'keyword_optimization': return '5-10 min';
-      case 'structure_change': return '20-45 min';
-      default: return '10-20 min';
-    }
+    return `Resolved ${result.rule} by applying recommended fix.`;
   }
 
   private parseTimeEstimate(timeStr: string): number {
@@ -420,7 +319,7 @@ export class FixSuggestionsGenerator {
     await fs.writeFile(outputPath, markdown, 'utf-8');
   }
 
-  private formatExecutionPlanAsMarkdown(plan: ExecutionPlan): string {
+  public formatExecutionPlanAsMarkdown(plan: ExecutionPlan): string {
     const { summary, fixes, recommendations, nextSteps } = plan;
 
     return `# GTM Toolkit - Content Optimization Execution Plan
@@ -499,7 +398,7 @@ After implementing these fixes, you should see:
 
 ---
 
-*This report was generated by GTM Toolkit with Claude AI analysis. For questions or support, visit our [documentation](https://gtmascode.dev/docs).*
+*This report was generated by GTM Toolkit with optional AI assistant prompts. For questions or support, visit our [documentation](https://gtmascode.dev/docs).*
 `;
   }
 }

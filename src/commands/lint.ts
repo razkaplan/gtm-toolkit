@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
 import path from 'path';
-import glob from 'glob';
+import { globSync } from 'glob';
 import { lintContent, summarizeLintResults } from '../core/seo-rules';
 import { loadContentFiles } from '../utils/content-loader';
 
@@ -22,7 +22,7 @@ export function createLintCommand(): Command {
         const files = [];
 
         for (const target of targets) {
-          const expandedTargets = /[*?]/.test(target) ? glob.sync(target) : [target];
+          const expandedTargets = /[*?]/.test(target) ? globSync(target) : [target];
 
           for (const expandedTarget of expandedTargets) {
             try {
