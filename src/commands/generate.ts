@@ -176,6 +176,23 @@ List your direct and indirect competitors below. Include full URLs so GTM Toolki
     console.log(chalk.gray(`ℹ️  Found existing competitors.md at ${competitorsPath}; leaving it unchanged.`));
   }
 
+  const audiencePath = path.join(reportsDir, 'target-audience.md');
+  if (!existsSync(audiencePath)) {
+    const audienceTemplate = `# Target Audience Brief
+
+- **Primary audience:** Add the main group you serve (e.g., Growth marketers, Founders)
+- **Core personas:** Add bullet points describing roles and responsibilities
+- **Jobs to be done:** Describe the problems you help them solve
+- **Core messaging:** Capture the message you use in marketing and sales assets
+
+Run \`gtm-toolkit init\` to populate this template with guided prompts and keep it aligned with your positioning.
+`;
+    writeFileSync(audiencePath, audienceTemplate, 'utf8');
+    console.log(chalk.yellow(`⚠️  Created placeholder target-audience.md at ${audiencePath}. Run 'gtm-toolkit init' to populate it.`));
+  } else {
+    console.log(chalk.gray(`ℹ️  Found existing target-audience.md at ${audiencePath}; leaving it unchanged.`));
+  }
+
   const keywordsPath = path.join(reportsDir, 'keywords.md');
   if (existsSync(keywordsPath)) {
     console.log(chalk.gray(`ℹ️  Found existing keywords.md at ${keywordsPath}; leaving it unchanged.`));

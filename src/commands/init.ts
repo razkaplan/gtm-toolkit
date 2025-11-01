@@ -83,6 +83,50 @@ export async function initCommand(options: InitCommandOptions = {}) {
     }
   ]);
 
+  const audienceInsights = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'primaryAudience',
+      message: 'Who is your primary target audience?',
+      default: 'Growth marketers and product teams',
+      filter: (input: string) => input.trim()
+    },
+    {
+      type: 'input',
+      name: 'corePersonas',
+      message: 'List the core personas you are serving (comma separated):',
+      default: 'Marketing Manager, Product Marketing Lead, SEO Strategist',
+      filter: (input: string) => input.trim()
+    },
+    {
+      type: 'input',
+      name: 'topJobsToBeDone',
+      message: 'What are the top jobs-to-be-done or needs you solve for them?',
+      default: 'Prove content ROI, accelerate SEO testing, operationalize AI workflows',
+      filter: (input: string) => input.trim()
+    },
+    {
+      type: 'editor',
+      name: 'messagingSummary',
+      message: 'Share the core marketing message you currently use (edit and save to continue):',
+      default: 'We help modern marketing teams operationalize GTM experiments with AI-assisted SEO, analytics, and content automation.',
+      validate: (input: string) => input.trim().length > 0 || 'Please describe your current messaging.'
+    },
+    {
+      type: 'confirm',
+      name: 'messageResonates',
+      message: 'Does this message resonate with the audience you described?',
+      default: true
+    },
+    {
+      type: 'input',
+      name: 'messageAdjustments',
+      message: 'What adjustments are needed so the messaging resonates better?',
+      when: answers => !answers.messageResonates,
+      filter: (input: string) => input.trim()
+    }
+  ]);
+
   // Additional analytics configuration
   const analyticsConfig: GTMConfig['analytics'] = {};
   const analyticsOption = options.analytics;
@@ -237,6 +281,21 @@ export async function initCommand(options: InitCommandOptions = {}) {
     defaultTitle,
     defaultDescription
   });
+
+  try {
+    await ensureTargetAudienceDoc({
+      siteName,
+      siteUrl,
+      targetAudience: audienceInsights.primaryAudience,
+      personas: audienceInsights.corePersonas,
+      jobsToBeDone: audienceInsights.topJobsToBeDone,
+      messagingSummary: audienceInsights.messagingSummary,
+      messageResonates: audienceInsights.messageResonates,
+      messageAdjustments: audienceInsights.messageAdjustments || ''
+    });
+  } catch (error) {
+    console.warn(chalk.yellow(`\n⚠️  Failed to save target audience brief: ${(error as Error).message}`));
+  }
 
   let ga4Status: 'detected' | 'injected' | 'pending' | null = null;
   if (analyticsConfig.ga4?.measurementId) {
@@ -722,6 +781,56 @@ async function applySiteMetadata(metadata: {
   if (updates.length > 0) {
     console.log(chalk.gray(`\n🛠️  Updated site metadata in ${updates.join(', ')}.`));
   }
+}
+
+async function ensureTargetAudienceDoc(options: {
+  siteName: string;
+  siteUrl: string;
+  targetAudience: string;
+  personas: string;
+  jobsToBeDone: string;
+  messagingSummary: string;
+  messageResonates: boolean;
+  messageAdjustments: string;
+}): Promise<void> {
+  const reportsDir = path.resolve('reports');
+  await fs.ensureDir(reportsDir);
+
+  const audiencePath = path.join(reportsDir, 'target-audience.md');
+
+  const template = `# Target Audience Brief
+
+**Site:** ${options.siteName}
+**URL:** ${options.siteUrl}
+
+## Primary Audience
+
+${options.targetAudience || 'Not specified'}
+
+## Core Personas
+
+${options.personas.split(',').map(persona => `- ${persona.trim()}`).filter(Boolean).join('\n') || '- (Add personas here)'}
+
+## Jobs To Be Done / Key Needs
+
+${options.jobsToBeDone || 'Describe why this audience needs your solution.'}
+
+## Core Messaging
+
+${options.messagingSummary.trim()}
+
+## Resonance Check
+
+- Current messaging resonates: ${options.messageResonates ? 'Yes ✅' : 'Needs work ⚠️'}
+${options.messageResonates ? '' : `- Adjustment notes: ${options.messageAdjustments || 'Add adjustments here.'}`}
+
+---
+
+Update this brief whenever you run new persona interviews, revisit ICP assumptions, or shift positioning. GTM Toolkit commands reference this document to keep audits and AI prompts aligned with the humans you build for.
+`;
+
+  await fs.writeFile(audiencePath, template, 'utf8');
+  console.log(chalk.green(`\n🧭 Target audience brief saved to ${audiencePath}`));
 }
 
 function escapeHtml(value: string): string {
