@@ -1,6 +1,6 @@
 {
   "name": "gtm-toolkit",
-  "version": "0.1.1",
+  "version": "0.5.2",
   "description": "Continuous Marketing Automation Toolkit by Raz Kaplan - SEO, GEO, and Analytics with optional AI integrations",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
