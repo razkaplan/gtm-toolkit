@@ -106,10 +106,11 @@ export async function initCommand(options: InitCommandOptions = {}) {
       filter: (input: string) => input.trim()
     },
     {
-      type: 'editor',
+      type: 'input',
       name: 'messagingSummary',
-      message: 'Share the core marketing message you currently use (edit and save to continue):',
+      message: 'Share the core marketing message you currently use:',
       default: 'We help modern marketing teams operationalize GTM experiments with AI-assisted SEO, analytics, and content automation.',
+      filter: (input: string) => input.trim(),
       validate: (input: string) => input.trim().length > 0 || 'Please describe your current messaging.'
     },
     {
