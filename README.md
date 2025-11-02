@@ -2,6 +2,8 @@
 
 **The first developer-native marketing automation platform** created by Raz Kaplan, bridging code and campaigns with optional AI integrations for intelligent content optimization.
 
+👉 Available on npm: [gtm-toolkit](https://www.npmjs.com/package/gtm-toolkit)
+
 [![npm version](https://badge.fury.io/js/gtm-toolkit.svg)](https://badge.fury.io/js/gtm-toolkit)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -12,6 +14,11 @@
 > Transform your marketing workflow with Git-based campaigns, optional AI-powered content optimization, and automated SEO compliance.
 
 ## 🌟 Why GTM Toolkit?
+
+### What’s New in 0.5.2
+- **Target audience briefs**: `gtm-toolkit init` now captures personas, jobs-to-be-done, and messaging resonance, saving everything to `reports/target-audience.md` so your audits stay aligned with the humans you serve.
+- **Report scaffolding**: `gtm-toolkit generate --all` auto-creates placeholders for competitors/keywords/target audience, keeping strategy docs in sync across repos.
+- **Generative SEO insights**: When Generative Optimization is enabled, the toolkit exports AI Overview (AEO) keyword CSVs from Google Search Console, surfacing geo/AEO search terms that AI assistants are crawling.
 
 Marketing teams and developers have been working in silos for too long. GTM Toolkit brings **marketing automation into the developer workflow** with:
 
@@ -59,6 +66,7 @@ gtm-toolkit lint content/blog
 - **Keyword ranking monitoring** and opportunity identification
 - **Indexing status monitoring** with automated alerts
 - **SEO insights generation** with data-driven recommendations
+- **AI Overview keyword export** highlighting AEO/GEO search terms so you can tailor content for generative engines
 
 ### 🤖 Intelligent File Generation
 - **Smart robots.txt** with AI bot controls (GPT, Claude, Gemini, Bing)
