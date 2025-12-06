@@ -18,6 +18,9 @@
 ### What’s New in 0.5.2
 - **Target audience briefs**: `gtm-toolkit init` now captures personas, jobs-to-be-done, and messaging resonance, saving everything to `reports/target-audience.md` so your audits stay aligned with the humans you serve.
 - **Report scaffolding**: `gtm-toolkit generate --all` auto-creates placeholders for competitors/keywords/target audience, keeping strategy docs in sync across repos.
+- **Google Gemini Integration**: Native support for Google's Generative AI SDK (@google/generative-ai) for keyword research and content analysis.
+- **Configurable SEO Keywords**: Define your own primary and secondary keywords in `gtm.config.js`, replacing the old hardcoded defaults.
+- **Improved Init Flow**: Interactive setup now prompts for AI API keys and handles existing analytics tags more gracefully.
 - **Generative SEO insights**: When Generative Optimization is enabled, the toolkit exports AI Overview (AEO) keyword CSVs from Google Search Console, surfacing geo/AEO search terms that AI assistants are crawling.
 
 Marketing teams and developers have been working in silos for too long. GTM Toolkit brings **marketing automation into the developer workflow** with:
@@ -170,7 +173,9 @@ module.exports = {
     siteName: 'Your Site Name',
     siteUrl: 'https://yoursite.com',
     defaultTitle: 'Your Default Title',
-    defaultDescription: 'Your meta description'
+    defaultDescription: 'Your meta description',
+    keywords: ['your', 'primary', 'keywords'], // [NEW] Custom primary keywords
+    secondaryKeywords: ['secondary', 'terms'] // [NEW] Custom secondary keywords
   },
   content: {
     contentPath: 'content',
@@ -186,8 +191,9 @@ module.exports = {
     sitemapUrl: 'https://yoursite.com/sitemap.xml'
   },
   ai: {
-    assistant: 'local-ai',
-    notes: 'Use GTM Toolkit prompts with your preferred local assistant'
+    apiKey: process.env.GOOGLE_API_KEY, // [NEW] Use environment variable
+    assistant: 'gemini',
+    model: 'gemini-pro'
   }
 }
 ```
@@ -195,7 +201,10 @@ module.exports = {
 ## 📋 Environment Setup
 
 ```bash
-# Required for AI-powered features (optional)
+# Required for AI-powered features via Google Gemini
+GOOGLE_API_KEY=your_gemini_api_key
+
+# Optional: Local assistant token
 AI_ASSISTANT_KEY=optional_local_assistant_token
 
 # Required for Google Search Console integration (optional)
@@ -354,6 +363,11 @@ npm run test:e2e        # End-to-end tests
 - ✅ Smart robots.txt and sitemap generation
 - ✅ CLI tools with interactive prompts
 - ✅ TypeScript support and type safety
+
+### v0.5.3 - AI & Config Update 🚀
+- ✅ **Google Gemini Integration**: Replaced mock data with real AI calls
+- ✅ **Dynamic Configuration**: Removed hardcoded keywords
+- ✅ **Flexible Analysis**: Run keyword research with just an AI key (GSC optional)
 
 ### Future Enhancements
 GTM Toolkit is actively developed with community input. Future enhancements will be driven by user feedback and real-world usage patterns.
