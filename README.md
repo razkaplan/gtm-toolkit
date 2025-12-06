@@ -15,7 +15,7 @@
 
 ## 🌟 Why GTM Toolkit?
 
-### What’s New in 0.5.2
+### What’s New in 0.5.3
 - **Target audience briefs**: `gtm-toolkit init` now captures personas, jobs-to-be-done, and messaging resonance, saving everything to `reports/target-audience.md` so your audits stay aligned with the humans you serve.
 - **Report scaffolding**: `gtm-toolkit generate --all` auto-creates placeholders for competitors/keywords/target audience, keeping strategy docs in sync across repos.
 - **Google Gemini Integration**: Native support for Google's Generative AI SDK (@google/generative-ai) for keyword research and content analysis.
