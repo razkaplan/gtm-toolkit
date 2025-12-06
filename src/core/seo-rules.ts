@@ -6,40 +6,22 @@ import matter from 'gray-matter';
 import { SEOLintRule, SEOLintResult, SEOLintRuleResult, SEOLintReport, SEOLintSummary } from '../types';
 export type { SEOLintResult, SEOLintRule } from '../types';
 
-// Primary keywords for validation
-const PRIMARY_KEYWORDS = [
-  'gtm as code',
-  'modern marketing', 
-  'developer marketing',
-  'product-led growth',
-  'product-led sales',
-  'content linter',
-  'seo guard rails',
-  'ai search optimization',
-  'vibe coding',
-  'telemetry',
-  'growth reviews',
-  'pricing as a product',
-  'posthog'
-];
-
-const SECONDARY_KEYWORDS = [
-  'content as code',
-  'growth engineering', 
-  'continuous marketing',
-  'observability',
-  'open handbook',
-  'repo-first website',
-  'changelog automation',
-  'feature flags',
-  'internal tools',
-  'brand consistency'
-];
+// Default fallback keywords if none provided in config
+const DEFAULT_PRIMARY_KEYWORDS = ['gtm as code', 'modern marketing'];
+const DEFAULT_SECONDARY_KEYWORDS = ['marketing automation'];
 
 const ALLOWED_CATEGORIES = ['gtm', 'SEO', 'vibe coding', 'OUT-OF-STEALTH'];
 
 const ignore = (..._args: unknown[]): void => {
   void _args;
+};
+
+// Helper to get keywords from options or defaults
+const getKeywords = (options: any) => {
+  return {
+    primary: options?.keywords || DEFAULT_PRIMARY_KEYWORDS,
+    secondary: options?.secondaryKeywords || DEFAULT_SECONDARY_KEYWORDS
+  };
 };
 
 // SEO Rules Implementation
@@ -59,7 +41,7 @@ export const SEO_RULES: SEOLintRule[] = [
           suggestion: 'Add a title field with 45-70 characters'
         };
       }
-      
+
       const titleLength = frontmatter.title.length;
       if (titleLength < 45 || titleLength > 70) {
         return {
@@ -68,25 +50,27 @@ export const SEO_RULES: SEOLintRule[] = [
           suggestion: titleLength < 45 ? 'Make title longer and more descriptive' : 'Shorten title for better SEO'
         };
       }
-      
+
       // Check for primary keyword in first half of title
       const firstHalf = frontmatter.title.toLowerCase().substring(0, titleLength / 2);
-      const hasKeyword = PRIMARY_KEYWORDS.some(keyword => 
+      const { primary } = getKeywords(frontmatter._options);
+
+      const hasKeyword = primary.some((keyword: string) =>
         firstHalf.includes(keyword.toLowerCase())
       );
-      
+
       if (!hasKeyword) {
         return {
           passed: false,
           message: 'No primary keyword found in title start',
-          suggestion: `Include one of these keywords near the beginning: ${PRIMARY_KEYWORDS.join(', ')}`
+          suggestion: `Include one of these keywords near the beginning: ${primary.slice(0, 3).join(', ')}...`
         };
       }
-      
+
       return { passed: true, message: `Title validated: ${titleLength} chars with keyword` };
     }
   },
-  
+
   {
     id: 'SEO-002',
     name: 'Date Format',
@@ -101,7 +85,7 @@ export const SEO_RULES: SEOLintRule[] = [
           suggestion: 'Add date field in YYYY-MM-DD format'
         };
       }
-      
+
       const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
       if (!dateRegex.test(frontmatter.date)) {
         return {
@@ -110,11 +94,11 @@ export const SEO_RULES: SEOLintRule[] = [
           suggestion: 'Use YYYY-MM-DD format (e.g., 2025-01-15)'
         };
       }
-      
+
       return { passed: true, message: `Date format validated: ${frontmatter.date}` };
     }
   },
-  
+
   {
     id: 'SEO-003',
     name: 'Category Validation',
@@ -129,7 +113,7 @@ export const SEO_RULES: SEOLintRule[] = [
           suggestion: `Add category field. Allowed: ${ALLOWED_CATEGORIES.join(', ')}`
         };
       }
-      
+
       if (!ALLOWED_CATEGORIES.includes(frontmatter.category)) {
         return {
           passed: false,
@@ -137,11 +121,11 @@ export const SEO_RULES: SEOLintRule[] = [
           suggestion: `Use one of: ${ALLOWED_CATEGORIES.join(', ')}`
         };
       }
-      
+
       return { passed: true, message: `Category validated: ${frontmatter.category}` };
     }
   },
-  
+
   {
     id: 'SEO-004',
     name: 'Summary Requirements',
@@ -156,7 +140,7 @@ export const SEO_RULES: SEOLintRule[] = [
           suggestion: 'Add summary field with 120-160 characters describing the content'
         };
       }
-      
+
       const summaryLength = frontmatter.summary.length;
       if (summaryLength < 120 || summaryLength > 160) {
         return {
@@ -165,13 +149,14 @@ export const SEO_RULES: SEOLintRule[] = [
           suggestion: summaryLength < 120 ? 'Expand summary with more detail' : 'Shorten summary for better meta description'
         };
       }
-      
+
       // Check for keywords in summary
       const summaryLower = frontmatter.summary.toLowerCase();
-      const hasKeywords = [...PRIMARY_KEYWORDS, ...SECONDARY_KEYWORDS].some(keyword =>
+      const { primary, secondary } = getKeywords(frontmatter._options);
+      const hasKeywords = [...primary, ...secondary].some((keyword: string) =>
         summaryLower.includes(keyword.toLowerCase())
       );
-      
+
       if (!hasKeywords) {
         return {
           passed: false,
@@ -179,11 +164,11 @@ export const SEO_RULES: SEOLintRule[] = [
           suggestion: 'Include 1-2 relevant keywords naturally in the summary'
         };
       }
-      
+
       return { passed: true, message: `Summary validated: ${summaryLength} chars with keywords` };
     }
   },
-  
+
   {
     id: 'SEO-005',
     name: 'Read Time',
@@ -198,7 +183,7 @@ export const SEO_RULES: SEOLintRule[] = [
           suggestion: 'Add Readtime field (e.g., "5 min read")'
         };
       }
-      
+
       const readtime = frontmatter.Readtime || frontmatter.readtime;
       const readtimeRegex = /^\d+\s+min\s+read$/;
       if (!readtimeRegex.test(readtime)) {
@@ -208,11 +193,11 @@ export const SEO_RULES: SEOLintRule[] = [
           suggestion: 'Use format like "3 min read"'
         };
       }
-      
+
       return { passed: true, message: `Readtime validated: ${readtime}` };
     }
   },
-  
+
   {
     id: 'SEO-006',
     name: 'Filename Validation',
@@ -226,7 +211,7 @@ export const SEO_RULES: SEOLintRule[] = [
           suggestion: 'Ensure filename follows YYYY-MM-DD-slug.md format'
         };
       }
-      
+
       const filenameRegex = /^\d{4}-\d{2}-\d{2}-.+\.md$/;
       if (!filenameRegex.test(filename)) {
         return {
@@ -235,7 +220,7 @@ export const SEO_RULES: SEOLintRule[] = [
           suggestion: 'Use YYYY-MM-DD-slug.md format'
         };
       }
-      
+
       // Extract date from filename and compare with frontmatter
       const fileDate = filename.substring(0, 10);
       if (frontmatter.date && frontmatter.date !== fileDate) {
@@ -245,11 +230,11 @@ export const SEO_RULES: SEOLintRule[] = [
           suggestion: 'Ensure filename date matches frontmatter date'
         };
       }
-      
+
       return { passed: true, message: `Filename validated: ${filename}` };
     }
   },
-  
+
   // Content Structure Rules (SEO-010 to SEO-014)
   {
     id: 'SEO-010',
@@ -265,7 +250,7 @@ export const SEO_RULES: SEOLintRule[] = [
           suggestion: 'Remove H1 headings from body. H1 comes from frontmatter title.'
         };
       }
-      
+
       if (!frontmatter.title) {
         return {
           passed: false,
@@ -273,11 +258,11 @@ export const SEO_RULES: SEOLintRule[] = [
           suggestion: 'Add title in frontmatter to serve as H1'
         };
       }
-      
+
       return { passed: true, message: 'H1 structure validated (title only)' };
     }
   },
-  
+
   {
     id: 'SEO-011',
     name: 'Heading Hierarchy',
@@ -287,11 +272,11 @@ export const SEO_RULES: SEOLintRule[] = [
       ignore(frontmatter);
       const headings = content.match(/^#{2,6} .+$/gm) || [];
       const headingLevels = headings.map(h => h.match(/^#+/)?.[0].length || 0);
-      
+
       for (let i = 1; i < headingLevels.length; i++) {
         const current = headingLevels[i];
         const previous = headingLevels[i - 1];
-        
+
         if (current > previous + 1) {
           return {
             passed: false,
@@ -300,11 +285,11 @@ export const SEO_RULES: SEOLintRule[] = [
           };
         }
       }
-      
+
       return { passed: true, message: `Heading hierarchy validated (${headings.length} headings)` };
     }
   },
-  
+
   {
     id: 'SEO-012',
     name: 'Keyword in Opening',
@@ -315,23 +300,24 @@ export const SEO_RULES: SEOLintRule[] = [
       // Remove frontmatter and get first 100 words
       const bodyContent = content.replace(/^---[\s\S]*?---/m, '').trim();
       const words = bodyContent.split(/\s+/).slice(0, 100).join(' ').toLowerCase();
-      
-      const hasKeyword = PRIMARY_KEYWORDS.some(keyword =>
+
+      const { primary } = getKeywords(frontmatter._options);
+      const hasKeyword = primary.some((keyword: string) =>
         words.includes(keyword.toLowerCase())
       );
-      
+
       if (!hasKeyword) {
         return {
           passed: false,
           message: 'No primary keyword found in first 100 words',
-          suggestion: `Naturally include a primary keyword: ${PRIMARY_KEYWORDS.slice(0, 3).join(', ')}`
+          suggestion: `Naturally include a primary keyword: ${primary.slice(0, 3).join(', ')}`
         };
       }
-      
+
       return { passed: true, message: 'Primary keyword found in opening content' };
     }
   },
-  
+
   {
     id: 'SEO-013',
     name: 'Internal Linking',
@@ -341,7 +327,7 @@ export const SEO_RULES: SEOLintRule[] = [
       ignore(frontmatter);
       // Look for internal links (relative paths or same domain)
       const internalLinks = content.match(/\[([^\]]+)\]\((\/[^)]+|#[^)]+)\)/g) || [];
-      
+
       if (internalLinks.length === 0) {
         return {
           passed: false,
@@ -349,11 +335,11 @@ export const SEO_RULES: SEOLintRule[] = [
           suggestion: 'Add at least one internal link to related content'
         };
       }
-      
+
       return { passed: true, message: `Internal linking validated (${internalLinks.length} links)` };
     }
   },
-  
+
   {
     id: 'SEO-014',
     name: 'Descriptive Link Text',
@@ -363,14 +349,14 @@ export const SEO_RULES: SEOLintRule[] = [
       ignore(frontmatter);
       const links = content.match(/\[([^\]]+)\]\([^)]+\)/g) || [];
       const badLinks = [];
-      
+
       for (const link of links) {
         const linkText = link.match(/\[([^\]]+)\]/)?.[1] || '';
         if (/^(https?:\/\/|www\.|click here|here|link|read more)$/i.test(linkText.trim())) {
           badLinks.push(linkText);
         }
       }
-      
+
       if (badLinks.length > 0) {
         return {
           passed: false,
@@ -378,11 +364,11 @@ export const SEO_RULES: SEOLintRule[] = [
           suggestion: 'Use descriptive anchor text instead of URLs or "click here"'
         };
       }
-      
+
       return { passed: true, message: `Link text validated (${links.length} links)` };
     }
   },
-  
+
   // Media & Accessibility Rules (SEO-020 to SEO-021)
   {
     id: 'SEO-020',
@@ -395,7 +381,7 @@ export const SEO_RULES: SEOLintRule[] = [
       if (images.length === 0) {
         return { passed: true, message: 'No images found - validation passed' };
       }
-      
+
       const missingAlt = [];
       for (const img of images) {
         const altText = img.match(/!\[([^\]]*)\]/)?.[1] || '';
@@ -403,7 +389,7 @@ export const SEO_RULES: SEOLintRule[] = [
           missingAlt.push(img);
         }
       }
-      
+
       if (missingAlt.length > 0) {
         return {
           passed: false,
@@ -411,11 +397,11 @@ export const SEO_RULES: SEOLintRule[] = [
           suggestion: 'Add descriptive alt text for all images'
         };
       }
-      
+
       return { passed: true, message: `Image alt text validated (${images.length} images)` };
     }
   },
-  
+
   // Technical Meta Rules (SEO-030 to SEO-031)
   {
     id: 'SEO-031',
@@ -433,7 +419,7 @@ export const SEO_RULES: SEOLintRule[] = [
         /\bfixme\b/gi,
         /\btodo\b(?!:)/gi // TODO but not TODO:
       ];
-      
+
       const found = [];
       for (const pattern of placeholders) {
         const matches = content.match(pattern);
@@ -441,7 +427,7 @@ export const SEO_RULES: SEOLintRule[] = [
           found.push(...matches);
         }
       }
-      
+
       if (found.length > 0) {
         return {
           passed: false,
@@ -449,11 +435,11 @@ export const SEO_RULES: SEOLintRule[] = [
           suggestion: 'Replace placeholder content with real links and text'
         };
       }
-      
+
       return { passed: true, message: 'No placeholder content found' };
     }
   },
-  
+
   // Readability Rules (SEO-040 to SEO-042)
   {
     id: 'SEO-040',
@@ -464,16 +450,16 @@ export const SEO_RULES: SEOLintRule[] = [
       ignore(frontmatter);
       const bodyContent = content.replace(/^---[\s\S]*?---/m, '').trim();
       const paragraphs = bodyContent.split(/\n\s*\n/).filter(p => p.trim().length > 0);
-      
+
       if (paragraphs.length < 2) {
         return { passed: true, message: 'Not enough paragraphs for sentence analysis' };
       }
-      
+
       const firstTwoParagraphs = paragraphs.slice(0, 2).join(' ');
       const sentences = firstTwoParagraphs.split(/[.!?]+/).filter(s => s.trim().length > 0);
-      
+
       const longSentences = sentences.filter(s => s.split(/\s+/).length > 30);
-      
+
       if (longSentences.length > 0) {
         return {
           passed: false,
@@ -481,11 +467,11 @@ export const SEO_RULES: SEOLintRule[] = [
           suggestion: 'Break long sentences into shorter ones for better readability'
         };
       }
-      
+
       return { passed: true, message: `Sentence length validated (${sentences.length} sentences)` };
     }
   },
-  
+
   // Prohibited Patterns (SEO-050 to SEO-052)
   {
     id: 'SEO-051',
@@ -495,23 +481,23 @@ export const SEO_RULES: SEOLintRule[] = [
     check: (content: string, frontmatter: any): SEOLintRuleResult => {
       ignore(frontmatter);
       const issues = [];
-      
+
       // Unclosed links
       if (content.match(/\[[^\]]*\n/) || content.match(/\]\([^)]*\n/)) {
         issues.push('Unclosed link syntax');
       }
-      
+
       // Unclosed code blocks
       const codeBlocks = content.match(/```/g) || [];
       if (codeBlocks.length % 2 !== 0) {
         issues.push('Unclosed code block');
       }
-      
+
       // Malformed headings
       if (content.match(/^#{7,}/m)) {
         issues.push('Invalid heading level (H7+)');
       }
-      
+
       if (issues.length > 0) {
         return {
           passed: false,
@@ -519,11 +505,11 @@ export const SEO_RULES: SEOLintRule[] = [
           suggestion: 'Fix Markdown syntax errors'
         };
       }
-      
+
       return { passed: true, message: 'Markdown syntax validated' };
     }
   },
-  
+
   {
     id: 'SEO-052',
     name: 'Keyword Density',
@@ -534,11 +520,13 @@ export const SEO_RULES: SEOLintRule[] = [
       const bodyContent = content.replace(/^---[\s\S]*?---/m, '').toLowerCase();
       const words = bodyContent.split(/\s+/).filter(w => w.length > 2);
       const totalWords = words.length;
-      
-      for (const keyword of PRIMARY_KEYWORDS) {
+
+      const { primary } = getKeywords(frontmatter._options);
+
+      for (const keyword of primary as string[]) {
         const keywordCount = (bodyContent.match(new RegExp(keyword.toLowerCase(), 'g')) || []).length;
         const density = (keywordCount / totalWords) * 100;
-        
+
         if (density > 2.5) {
           return {
             passed: false,
@@ -547,7 +535,7 @@ export const SEO_RULES: SEOLintRule[] = [
           };
         }
       }
-      
+
       return { passed: true, message: 'Keyword density within acceptable range' };
     }
   }
@@ -572,6 +560,8 @@ export interface LintContentOptions {
   filePath?: string;
   filename?: string;
   frontmatter?: Record<string, any>;
+  keywords?: string[];
+  secondaryKeywords?: string[];
 }
 
 export function lintContent(rawContent: string, filename?: string): SEOLintResult[];
@@ -600,6 +590,12 @@ export function lintContent(
   const filename =
     normalizedOptions.filename ||
     (normalizedOptions.filePath ? path.basename(normalizedOptions.filePath) : undefined);
+
+  // Inject options into frontmatter for rules to access
+  frontmatter._options = {
+    keywords: normalizedOptions.keywords,
+    secondaryKeywords: normalizedOptions.secondaryKeywords
+  };
 
   return SEO_RULES.map(rule => {
     const result = rule.check(rawContent, frontmatter, filename);

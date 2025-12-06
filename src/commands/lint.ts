@@ -5,6 +5,7 @@ import path from 'path';
 import { globSync } from 'glob';
 import { lintContent, summarizeLintResults } from '../core/seo-rules';
 import { loadContentFiles } from '../utils/content-loader';
+import { loadConfig } from '../core/config';
 
 export function createLintCommand(): Command {
   const cmd = new Command('lint');
@@ -42,10 +43,14 @@ export function createLintCommand(): Command {
 
         spinner.succeed(`Linting ${files.length} content files...`);
 
+        const config = loadConfig();
+
         const lintResults = files.map(file => {
           const results = lintContent(file.content, {
             filePath: file.path,
-            frontmatter: file.frontmatter
+            frontmatter: file.frontmatter,
+            keywords: config?.seo?.keywords,
+            secondaryKeywords: config?.seo?.secondaryKeywords
           });
           const { summary, score } = summarizeLintResults(results);
           return {

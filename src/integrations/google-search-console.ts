@@ -96,12 +96,12 @@ export class GoogleSearchConsoleClient {
           'https://www.googleapis.com/auth/webmasters'
         ]
       });
-      
+
       this.searchConsole = google.searchconsole({
         version: 'v1',
         auth: this.auth as any
       });
-      
+
       this.isInitialized = true;
       console.log('Google Search Console client initialized successfully');
     } catch (error) {
@@ -216,7 +216,7 @@ export class GoogleSearchConsoleClient {
     // Get previous period for trend analysis
     const previousEndDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const previousStartDate = new Date(Date.now() - (days * 2) * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    
+
     const previousData = await this.getSearchAnalytics({
       startDate: previousStartDate,
       endDate: previousEndDate,
@@ -235,7 +235,7 @@ export class GoogleSearchConsoleClient {
       .map(row => {
         const keyword = row.keys[0];
         const previousRow = previousLookup.get(keyword);
-        
+
         // Calculate trend
         let trend: 'up' | 'down' | 'stable' = 'stable';
         if (previousRow) {
@@ -293,7 +293,7 @@ export class GoogleSearchConsoleClient {
     }
 
     const indexingStatus = new Map<string, IndexingStatus>();
-    
+
     // GSC API has rate limits, so we'll batch the requests
     for (const url of urls) {
       try {
@@ -399,11 +399,12 @@ export class GoogleSearchConsoleClient {
 
     try {
       // Note: Mobile usability is typically accessed via the GSC web interface
-      // The API has limited mobile usability endpoints
-      console.warn('Mobile usability data requires manual GSC interface access');
+      // The API has limited mobile usability endpoints.
+      // We return an empty array to avoid breaking flows, but log a warning.
+      console.warn('NOTE: Mobile usability data requires manual GSC interface access or the specific URL Inspection API parameters.');
       return [];
     } catch (error) {
-      console.error('Failed to fetch mobile usability issues:', error);
+      console.warn('Failed to fetch mobile usability issues (expected limitation):', error);
       return [];
     }
   }
@@ -433,7 +434,7 @@ export class GoogleSearchConsoleClient {
     };
   }> {
     const days = options.days || 30;
-    
+
     // Get overall performance
     const overallData = await this.getSearchAnalytics({
       startDate: new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -443,7 +444,7 @@ export class GoogleSearchConsoleClient {
 
     // Get keyword performance with trends
     const keywordPerformance = await this.getKeywordPerformance({ days });
-    
+
     // Get top pages
     const topPages = await this.getTopPages({ days, limit: 10 });
 
@@ -451,11 +452,11 @@ export class GoogleSearchConsoleClient {
     const lowCTRQueries = keywordPerformance
       .filter(k => k.ctr < 2 && k.impressions > 100)
       .slice(0, 10);
-    
+
     const highImpressionLowPosition = keywordPerformance
       .filter(k => k.position > 10 && k.impressions > 200)
       .slice(0, 10);
-    
+
     const newOpportunities = keywordPerformance
       .filter(k => k.opportunity === 'high')
       .slice(0, 15);
@@ -465,7 +466,7 @@ export class GoogleSearchConsoleClient {
       .filter(k => k.trend === 'down' && k.impressions > 50)
       .map(k => k.keyword)
       .slice(0, 10);
-    
+
     const poorPerformingPages = topPages
       .filter(p => p.ctr < 1)
       .map(p => p.keys[0])
@@ -549,6 +550,12 @@ export class GoogleSearchConsoleClient {
     const startDate = options.startDate || new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const regex = options.regex || '(?i)((^|\\s)(who|what|when|where|why|how|does|do|can|should|is|are|will|did)\\b.*)|(.*\\b(vs|versus|difference between|compare|comparison)\\b.*)|(.*\\b(ai overview|ai overview:|overview|summary|definition|meaning)\\b.*)|(.*\\b(chatgpt|gemini|bard|copilot|perplexity|claude)\\b.*)';
 
+    try {
+      new RegExp(regex);
+    } catch (e) {
+      throw new Error(`Invalid regex provided for AI Overview keywords: ${(e as Error).message}`);
+    }
+
     const response = await this.searchConsole.searchanalytics.query({
       siteUrl: this.siteUrl,
       requestBody: {
@@ -603,36 +610,36 @@ export const gscUtils = {
       .filter(row => row.impressions > 100 && row.ctr < 0.05) // Less than 5% CTR
       .sort((a, b) => b.impressions - a.impressions);
   },
-  
+
   // Find ranking opportunities (high impressions, poor position)
   findRankingOpportunities(data: PerformanceData[]): PerformanceData[] {
     return data
       .filter(row => row.impressions > 200 && row.position > 10 && row.position < 50)
       .sort((a, b) => (b.impressions / b.position) - (a.impressions / a.position));
   },
-  
+
   // Group queries by topic
   groupQueriesByTopic(data: PerformanceData[]): Record<string, PerformanceData[]> {
     const topics: Record<string, PerformanceData[]> = {};
-    
+
     data.forEach(row => {
       const query = row.keys[0].toLowerCase();
       const words = query.split(' ');
       const mainTopic = words.find(word => word.length > 4) || words[0] || 'other';
-      
+
       if (!topics[mainTopic]) {
         topics[mainTopic] = [];
       }
       topics[mainTopic].push(row);
     });
-    
+
     return topics;
   },
-  
+
   // Calculate seasonal trends (requires historical data)
   calculateSeasonalTrends(historicalData: { date: string; data: PerformanceData[] }[]): Record<string, number[]> {
     const trends: Record<string, number[]> = {};
-    
+
     historicalData.forEach(entry => {
       entry.data.forEach(row => {
         const query = row.keys[0];
@@ -642,7 +649,7 @@ export const gscUtils = {
         trends[query].push(row.clicks);
       });
     });
-    
+
     return trends;
   }
 };

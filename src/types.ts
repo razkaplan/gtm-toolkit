@@ -22,6 +22,8 @@ export interface GTMConfig {
     siteUrl: string;
     defaultTitle: string;
     defaultDescription: string;
+    keywords?: string[]; // Primary keywords for SEO validation
+    secondaryKeywords?: string[]; // Secondary keywords
     twitterHandle?: string;
     facebookAppId?: string;
   };
@@ -44,6 +46,7 @@ export interface GTMConfig {
   ai?: {
     apiKey?: string;
     model?: string;
+    assistant?: 'local-ai' | 'gemini';
   };
 }
 

@@ -76,20 +76,21 @@ export async function analyzeCommand(options: AnalyzeCommandOptions = {}) {
       }
 
       const gscConfig = config.analytics?.gsc;
-      if (!gscConfig?.enabled || !gscConfig.credentialsPath) {
-        spinner.fail('Google Search Console credentials required for keyword research.');
-        console.log(chalk.yellow('Connect your Search Console JSON via analytics.gsc in gtm.config.js, then rerun `gtm-toolkit analyze --keywords <topic>`.'));
-        return;
+      let credentials;
+      let siteUrl = config.seo.siteUrl;
+
+      if (gscConfig?.enabled && gscConfig.credentialsPath) {
+        try {
+          credentials = JSON.parse(readFileSync(path.resolve(gscConfig.credentialsPath), 'utf8'));
+          if (gscConfig.siteUrl) siteUrl = gscConfig.siteUrl;
+        } catch (error) {
+          console.warn(chalk.yellow(`Warning: Failed to load GSC credentials: ${(error as Error).message}. Continuing without GSC data.`));
+        }
       }
 
-      const siteUrl = gscConfig.siteUrl || config.seo.siteUrl;
-
-      let credentials;
-      try {
-        credentials = JSON.parse(readFileSync(path.resolve(gscConfig.credentialsPath), 'utf8'));
-      } catch (error) {
-        spinner.fail('Failed to read Google Search Console credentials JSON.');
-        console.error(chalk.red((error as Error).message));
+      if (!credentials && !config.ai?.apiKey) {
+        spinner.fail('Either GSC credentials or AI API Key is required for keyword research.');
+        console.log(chalk.yellow('Configure analytics.gsc or ai.apiKey in gtm.config.js.'));
         return;
       }
 
@@ -100,31 +101,39 @@ export async function analyzeCommand(options: AnalyzeCommandOptions = {}) {
       });
 
       try {
+        let gscKeywords: any[] = [];
         const endDate = new Date();
         const startDate = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000);
-        const gscKeywords = await keywordsTool.getCurrentKeywordPerformance({
-          startDate: startDate.toISOString().split('T')[0],
-          endDate: endDate.toISOString().split('T')[0],
-          dimensions: ['query'],
-          rowLimit: 50
-        });
+
+        if (credentials) {
+          try {
+            gscKeywords = await keywordsTool.getCurrentKeywordPerformance({
+              startDate: startDate.toISOString().split('T')[0],
+              endDate: endDate.toISOString().split('T')[0],
+              dimensions: ['query'],
+              rowLimit: 50
+            });
+          } catch (e) {
+            console.warn('GSC fetch failed, continuing with AI only.');
+          }
+        }
         const aiKeywords = await keywordsTool.researchKeywordsWithAI(
           options.keywords,
           'developers and marketers'
         );
-        
+
         spinner.succeed('Keywords research complete');
         console.log(JSON.stringify({
           siteUrl,
           window: {
             start: startDate.toISOString().split('T')[0],
-            end: endDate.toISOString().split('T')[0]
+            end: new Date().toISOString().split('T')[0]
           },
-          gscTopQueries: gscKeywords.slice(0, 20),
+          gscTopQueries: gscKeywords ? gscKeywords.slice(0, 20) : [],
           aiSuggestions: aiKeywords
         }, null, 2));
       } catch (error) {
-        spinner.fail('Failed to fetch keywords from Google Search Console.');
+        spinner.fail('Keyword research failed.');
         console.error(chalk.red((error as Error).message));
         return;
       }

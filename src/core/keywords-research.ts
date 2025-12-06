@@ -1,6 +1,7 @@
 // Keywords Research Tool with Google Search Console Integration
 
 import { google, searchconsole_v1 } from 'googleapis';
+import { AIClient } from '../ai/client';
 
 export interface KeywordData {
   keyword: string;
@@ -117,11 +118,12 @@ export class KeywordsResearchTool {
     }
   }
 
-  // AI-powered keyword research helper (prompts + mock data)
+  // AI-powered keyword research helper (prompts + real data)
   async researchKeywordsWithAI(topic: string, targetAudience: string): Promise<KeywordData[]> {
     if (!this.config.aiAssistantKey) {
       console.warn('AI assistant key not provided. Using fallback keyword suggestions.');
-      return this.getFallbackKeywords(topic);
+      // Fallback: Return empty or basic structure if no API key
+      return [];
     }
 
     const contextualTopic = targetAudience
@@ -129,12 +131,11 @@ export class KeywordsResearchTool {
       : topic;
 
     try {
-      // Note: In real implementation, you'd make actual AI assistant call here using the prompt above.
-      // For now, returning structured mock data that follows the pattern.
-      return this.generateStructuredKeywords(contextualTopic);
+      const client = new AIClient(this.config.aiAssistantKey);
+      return await client.generateKeywords(contextualTopic, targetAudience);
     } catch (error) {
       console.error('Failed to research keywords with AI:', error);
-      return this.getFallbackKeywords(contextualTopic);
+      return [];
     }
   }
 
@@ -145,16 +146,16 @@ export class KeywordsResearchTool {
       .replace(/[^a-z\s]/g, ' ')
       .split(/\s+/)
       .filter(word => word.length > 3);
-    
+
     // Count word frequency
     const wordCount: Record<string, number> = {};
     words.forEach(word => {
       wordCount[word] = (wordCount[word] || 0) + 1;
     });
-    
+
     // Get most frequent words
     return Object.entries(wordCount)
-      .sort(([,a], [,b]) => b - a)
+      .sort(([, a], [, b]) => b - a)
       .slice(0, 20)
       .map(([word]) => word);
   }
@@ -166,7 +167,7 @@ export class KeywordsResearchTool {
     competitorAnalysis: CompetitorKeywords[];
   }> {
     const competitorAnalysis: CompetitorKeywords[] = [];
-    
+
     // Analyze each competitor
     for (const url of competitorUrls) {
       try {
@@ -187,18 +188,18 @@ export class KeywordsResearchTool {
       startDate: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       endDate: new Date().toISOString().split('T')[0]
     });
-    
+
     const ourKeywords = new Set(currentKeywords.map(k => k.query));
-    
+
     const allCompetitorKeywords = competitorAnalysis
       .flatMap(c => c.keywords)
       .filter(k => !ourKeywords.has(k.keyword));
-    
+
     const missingKeywords = allCompetitorKeywords
       .filter(k => k.difficulty < 60) // Focus on achievable keywords
       .sort((a, b) => b.searchVolume - a.searchVolume)
       .slice(0, 20);
-      
+
     const opportunityKeywords = allCompetitorKeywords
       .filter(k => k.difficulty < 40 && k.searchVolume > 100)
       .sort((a, b) => (b.searchVolume / b.difficulty) - (a.searchVolume / a.difficulty))
@@ -211,71 +212,19 @@ export class KeywordsResearchTool {
     };
   }
 
-  // Analyze competitor keywords (simplified version)
+  // Analyze competitor keywords
   private async analyzeCompetitorKeywords(url: string): Promise<KeywordData[]> {
-    // In production, this would use tools like Ahrefs, SEMrush, or custom scraping
-    // For now, returning structured mock data
-    const domain = new URL(url).hostname;
-    
-    return [
-      {
-        keyword: `${domain.replace(/\./g, ' ')} alternative`,
-        searchVolume: 1200,
-        difficulty: 35,
-        cpc: 2.50,
-        trend: 'rising',
-        competition: 'medium',
-        relatedKeywords: ['alternative to', 'vs comparison', 'competitor'],
-        searchIntent: 'commercial'
-      },
-      {
-        keyword: `how to use ${domain.split('.')[0]}`,
-        searchVolume: 800,
-        difficulty: 25,
-        cpc: 1.20,
-        trend: 'stable',
-        competition: 'low',
-        relatedKeywords: ['tutorial', 'guide', 'getting started'],
-        searchIntent: 'informational'
-      }
-      // Add more realistic competitor keywords...
-    ];
+    if (!this.config.aiAssistantKey) return [];
+
+    // Use AI to estimate keywords for the domain (since we can't scrape/crawl deep in this lightweight tool)
+    const client = new AIClient(this.config.aiAssistantKey);
+    return await client.generateKeywords(`competitor analysis for ${url}`, "market research");
   }
 
-  // Generate keyword suggestions based on topic
-  private generateStructuredKeywords(topic: string): KeywordData[] {
-    const baseKeywords = [
-      `${topic}`,
-      `${topic} tutorial`,
-      `${topic} guide`,
-      `${topic} best practices`,
-      `how to ${topic}`,
-      `${topic} vs`,
-      `${topic} examples`,
-      `${topic} tools`,
-      `${topic} for beginners`,
-      `${topic} automation`,
-      `${topic} strategy`,
-      `${topic} optimization`,
-      `${topic} integration`,
-      `${topic} api`,
-      `${topic} documentation`
-    ];
-
-    return baseKeywords.map((keyword, index) => ({
-      keyword,
-      searchVolume: Math.floor(Math.random() * 5000) + 100,
-      difficulty: Math.floor(Math.random() * 80) + 10,
-      cpc: Math.round((Math.random() * 5 + 0.5) * 100) / 100,
-      trend: ['rising', 'falling', 'stable'][Math.floor(Math.random() * 3)] as KeywordData['trend'],
-      competition: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)] as KeywordData['competition'],
-      relatedKeywords: baseKeywords.filter((_, i) => i !== index).slice(0, 3),
-      searchIntent: ['informational', 'commercial', 'transactional', 'navigational'][Math.floor(Math.random() * 4)] as KeywordData['searchIntent']
-    }));
-  }
-
+  // Placeholder removed - usage replaced by AIClient
   private getFallbackKeywords(topic: string): KeywordData[] {
-    return this.generateStructuredKeywords(topic);
+    // Minimal fallback implementation if needed
+    return [];
   }
 
   // Keyword opportunity score
@@ -288,7 +237,7 @@ export class KeywordsResearchTool {
       'informational': 7,
       'navigational': 5
     }[keyword.searchIntent] || 5;
-    
+
     return Math.round((volumeScore + difficultyScore + intentScore) / 3 * 10) / 10;
   }
 
@@ -356,7 +305,7 @@ export class KeywordsResearchTool {
   }> {
     // This would typically use an AI assistant to generate the brief
     // For now, returning a structured template
-    
+
     return {
       title: `Complete Guide to ${primaryKeyword.charAt(0).toUpperCase() + primaryKeyword.slice(1)} (2025)`,
       metaDescription: `Learn everything about ${primaryKeyword}. Step-by-step guide with examples, best practices, and tools for ${relatedKeywords.slice(0, 2).join(' and ')}.`,
@@ -456,11 +405,11 @@ export const keywordUtils = {
     const union = [...new Set([...words1, ...words2])];
     return intersection.length / union.length;
   },
-  
+
   // Group related keywords
   groupKeywords(keywords: KeywordData[]): Record<string, KeywordData[]> {
     const groups: Record<string, KeywordData[]> = {};
-    
+
     keywords.forEach(keyword => {
       const rootKeyword = keyword.keyword.split(' ').slice(0, 2).join(' ');
       if (!groups[rootKeyword]) {
@@ -468,10 +417,10 @@ export const keywordUtils = {
       }
       groups[rootKeyword].push(keyword);
     });
-    
+
     return groups;
   },
-  
+
   // Find long-tail opportunities
   findLongTailOpportunities(keywords: KeywordData[]): KeywordData[] {
     return keywords

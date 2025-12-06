@@ -76,6 +76,13 @@ export async function initCommand(options: InitCommandOptions = {}) {
     },
     {
       type: 'input',
+      name: 'googleApiKey',
+      message: 'Enter your Google Gemini API Key (optional, for AI features):',
+      default: '',
+      filter: (input: string) => input.trim()
+    },
+    {
+      type: 'input',
       name: 'gscCredentialsPath',
       message: 'Path to Google Search Console service account JSON (leave blank to skip):',
       default: '',
@@ -265,6 +272,11 @@ export async function initCommand(options: InitCommandOptions = {}) {
       enabled: generalAnswers.enableGEO,
       optimizeForAI: generalAnswers.enableGEO,
       structuredData: true
+    },
+    ai: {
+      apiKey: generalAnswers.googleApiKey,
+      model: 'gemini-pro',
+      assistant: 'gemini'
     }
   };
 
