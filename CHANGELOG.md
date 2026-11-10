@@ -1,27 +1,50 @@
+# Changelog
 
-## [Unreleased] - 2025-10-23
+## 2.0.0 (2026-11-10)
 
-### Major Features
-- Added Google Search Console AEO keyword export. When Generative Optimization is enabled, `gtm-toolkit generate` now builds `reports/ai-overview-keywords.csv`, filtering queries with purpose-built regex to surface AI-overview behaviour.
+A rewrite. Version 0.5 was an SEO linter with "GTM as code" on the label. Version 2 is the thing the label promised: a go-to-market spec you declare in the repo, check in CI and compile into the files that people, search engines and AI models read.
 
-### Analytics & Tracking
-- GA4 detection now scans all `app/` and `pages/` entry points; flags mismatching IDs and optionally injects the `next/script` snippet automatically.
-- Updated AI bot prompt copy to reference Gemini instead of Bard.
+### Why a rewrite
 
-### CLI Improvements
-- `gtm-toolkit generate` runs a full audit before generation, so teams can review gaps prior to writing new files.
-- `gtm-toolkit analyze` prints an entry-points summary (competitor, gaps, keywords) when invoked, preventing empty runs.
+Running 0.5 on gtmascode.dev, the site it was built for, turned up problems that patches would not fix:
 
-### Workflow & Quality
-- Added `npm run security-check` to the standard test suite (alongside lint/build/runtime-check).
-- Temporary integration test directory is pruned before the security scan to keep the repo clean.
-- Replaced all third-party authorship references; README now credits Raz Kaplan explicitly and introduces an MIT license with attribution links.
-- Replaced previous Claude-specific helpers with local AI instruction builders; CLI now outputs prompts users can paste into Copilot, Cursor, Claude Desktop, etc.
+- `generate --sitemap` built URLs from post titles instead of file names, and skipped the file whenever it already existed. The sitemap it wrote for gtmascode.dev was a year stale, and 22 of its 29 URLs did not resolve.
+- `generate --robots` disallowed `/_next/` and `/api/` for every crawler, which hid the site's own scripts, styles and social images, and set `Crawl-delay` for Googlebot, which ignores it.
+- The README promised "50+ SEO rules". There were 16, several of them tied to hardcoded keywords and a hardcoded list of four categories from one blog.
+- `generate --meta` printed a success message and did nothing. The README documented `hooks install`, `test`, `benchmark` and `lint --changed`, none of which existed, and quoted testimonials with no named source.
+- `analyze` and `suggestions` produced prompts to paste into an assistant rather than results.
+- There were no tests.
 
-### Community Callout
-- This release still has a handful of UX rough edges (init metadata detection, analytics setup, strategy docs). I’m aware they need polish and would love help from contributors—issues and PRs are very welcome.
+### Added
 
-### Next Steps for Docs & Marketing
-- Document the new AEO CSV workflow and how to interpret AI-overview keyword reports.
-- Publish a how-to on automatic GA4 detection/insertion so teams know what happens during init.
-- Highlight the audit-first generation flow in the release post, framing it as a quality gate for SEO ops.
+- **The GTM spec.** `gtm/gtm.yaml` plus `positioning.yaml`, `personas.yaml`, `messaging.yaml`, `topics.yaml` and `competitors.yaml`, validated against a schema, with JSON Schemas shipped in `schemas/` for editor autocomplete.
+- **`gtm validate`**: schema errors with file and line, references between files, duplicate ids, claims with no proof, personas with no questions, and a check that the spec follows its own vocabulary.
+- **`gtm lint`**: 21 rules across `seo/` and `messaging/`. Line and column on every finding, `--changed`, `--max-warnings`, `--quiet`, and `stylish`, `json` and `github` output. Per-rule severity, options and file overrides.
+- **`messaging/` rules**: vocabulary to avoid and to prefer, frontmatter references checked like imports, and topic keywords read from the spec.
+- **`seo/internal-links`**: internal links and images are resolved against every URL the site serves.
+- **`gtm build`**: deterministic `robots.txt`, `sitemap.xml`, `llms.txt`, `GTM.md` and optional JSON-LD. `--check` fails on drift, `--dry-run` shows the plan.
+- **AI crawler policy by purpose**: training, search and user-triggered fetches are three settings, with per-agent overrides.
+- **`GTM.md`**: the spec compiled into one brief for coding agents and new teammates.
+- **`gtm coverage`**: published content per persona, topic, pillar and question. Unanswered questions are the content backlog.
+- **`gtm diff`**: a semantic diff of the strategy between git refs, and the content a removed id strands.
+- **`gtm check`**: validate, lint and build check in one command for CI.
+- **`gtm rules`** and **`gtm explain`**.
+- A typed programmatic API, and 105 tests.
+
+### Changed
+
+- The config file is `gtm/gtm.yaml`. `gtm init` imports the site name, URL, description and AI crawler setting from an existing `gtm.config.js`.
+- `generate` is `build`, and it owns its output: generated files are rewritten on every run.
+- Rule ids are names (`seo/title-length`), not numbers (`SEO-001`).
+- The binary is `gtm`. `gtm-toolkit` still works.
+- Node 20 or newer.
+
+### Removed
+
+- `analyze`, `suggestions`, `fix` and `audit`, and the prompt builders behind them.
+- The Google Search Console client, the Gemini integration and the GA4 and PostHog snippet injection. The dependency tree went from 11 runtime packages, including `googleapis` and `jsdom`, to 7 small ones.
+- Hardcoded keywords and categories.
+
+## 0.5.3 and earlier
+
+See the [0.5.3 README on npm](https://www.npmjs.com/package/gtm-toolkit/v/0.5.3).

@@ -1,418 +1,238 @@
-# GTM Toolkit 🚀
+# GTM Toolkit
 
-**The first developer-native marketing automation platform** created by Raz Kaplan, bridging code and campaigns with optional AI integrations for intelligent content optimization.
-
-👉 Available on npm: [gtm-toolkit](https://www.npmjs.com/package/gtm-toolkit)
-
-[![npm version](https://badge.fury.io/js/gtm-toolkit.svg)](https://badge.fury.io/js/gtm-toolkit)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![AI Ready](https://img.shields.io/badge/AI-Ready-blue)](https://www.gtmascode.dev/docs)
-
-*Created and maintained by [Raz Kaplan](https://www.gtmascode.dev/).* 
-
-> Transform your marketing workflow with Git-based campaigns, optional AI-powered content optimization, and automated SEO compliance.
-
-## 🌟 Why GTM Toolkit?
-
-### What’s New in 0.5.3
-- **Target audience briefs**: `gtm-toolkit init` now captures personas, jobs-to-be-done, and messaging resonance, saving everything to `reports/target-audience.md` so your audits stay aligned with the humans you serve.
-- **Report scaffolding**: `gtm-toolkit generate --all` auto-creates placeholders for competitors/keywords/target audience, keeping strategy docs in sync across repos.
-- **Google Gemini Integration**: Native support for Google's Generative AI SDK (@google/generative-ai) for keyword research and content analysis.
-- **Configurable SEO Keywords**: Define your own primary and secondary keywords in `gtm.config.js`, replacing the old hardcoded defaults.
-- **Improved Init Flow**: Interactive setup now prompts for AI API keys and handles existing analytics tags more gracefully.
-- **Generative SEO insights**: When Generative Optimization is enabled, the toolkit exports AI Overview (AEO) keyword CSVs from Google Search Console, surfacing geo/AEO search terms that AI assistants are crawling.
-
-Marketing teams and developers have been working in silos for too long. GTM Toolkit brings **marketing automation into the developer workflow** with:
-
-- **Content as Code**: Version-controlled marketing content with automated validation
-- **AI-Native**: Optional prompts for local assistants (Copilot, Cursor, Claude Desktop, Gemini, etc.) to drive intelligent content optimization
-- **SEO Guard Rails**: Automated compliance checking with 50+ proven SEO rules
-- **Developer-First**: CLI tools, Git hooks, and CI/CD integration
-- **Framework Agnostic**: Works with Next.js, Nuxt, Astro, or any custom setup
-
-## 🚀 Quick Start
+Go-to-market as code. Declare your positioning, personas, messaging and topics in the repo, check your content against them in CI, and compile the result for the three audiences every page now has: people, search engines and AI models.
 
 ```bash
-# Install globally
-npm install -g gtm-toolkit
-
-# Or install in your project
-npm install gtm-toolkit --save-dev
-
-# Initialize in your project
-gtm-toolkit init --framework nextjs
-
-# Generate SEO files
-gtm-toolkit generate --all
-
-# Lint your content
-gtm-toolkit lint content/blog
+npm install --save-dev gtm-toolkit
+npx gtm init
 ```
 
-## ✨ Core Features
+Created and maintained by [Raz Kaplan](https://www.gtmascode.dev). Docs: [gtmascode.dev/docs](https://www.gtmascode.dev/docs).
 
-### 🧠 AI-Powered Content Optimization
-- **AI-ready integration layer** for intelligent content analysis and optimization
-- **Competitor analysis** with automated benchmarking
-- **Content gap identification** and strategy generation
-- **Keyword research** with search intent classification
+## The idea
 
-### 🔍 Advanced SEO Engine
-- **50+ SEO rules** based on proven marketing practices
-- **Real-time content scoring** with actionable suggestions
-- **Automated frontmatter validation** (title, meta, keywords, readability)
-- **Schema markup generation** for rich search results
+Engineering teams stopped keeping the truth in slide decks a long time ago. The schema is in the repo, a change is a pull request, and CI refuses to merge what breaks the contract.
 
-### 📊 Google Search Console Integration
-- **Performance tracking** with trend analysis
-- **Keyword ranking monitoring** and opportunity identification
-- **Indexing status monitoring** with automated alerts
-- **SEO insights generation** with data-driven recommendations
-- **AI Overview keyword export** highlighting AEO/GEO search terms so you can tailor content for generative engines
+Go-to-market strategy still lives in decks, wikis and somebody's head. That was survivable when people wrote all the copy. It is not survivable when coding agents write landing pages, docs and changelogs at the speed of a commit, with no idea who you sell to or which words you retired last quarter.
 
-### 🤖 Intelligent File Generation
-- **Smart robots.txt** with AI bot controls (GPT, Claude, Gemini, Bing)
-- **Dynamic XML sitemaps** with priority scoring and image support
-- **Framework-specific optimization** for Next.js, Nuxt, Astro
+GTM Toolkit gives strategy the same treatment as code:
 
-### 🔧 Developer Experience
-- **Git hooks** for automated content validation
-- **CLI tools** with interactive prompts
-- **CI/CD integration** via GitHub Actions
-- **TypeScript support** with full type safety
+1. **Declare it.** A `gtm/` directory of small YAML files: who you are for, what you claim, how you prove it, the words you use and the ones you do not.
+2. **Check it.** `gtm validate` checks the strategy itself (a claim with no proof is a warning). `gtm lint` checks every page against it.
+3. **Compile it.** `gtm build` writes `robots.txt`, `sitemap.xml`, `llms.txt`, structured data and `GTM.md`, a brief your coding agents read before they write a word.
+4. **Keep it true.** `gtm check` runs all of it in CI and fails when a generated file has drifted from its source.
 
-## 📖 Usage Examples
+## A two-minute tour
 
-### SEO Content Linting
-```bash
-# Lint an entire content directory and show human-readable output
-gtm-toolkit lint content/blog --format console
-
-# Emit JSON results for CI tooling and fail the build on errors
-gtm-toolkit lint "content/**/*.md" --format json --fail-on-error
-
-# Lint a single file before opening a PR
-gtm-toolkit lint content/blog/2024-01-01-launch.md
+```console
+$ npx gtm init
+  created  gtm/gtm.yaml
+  created  gtm/positioning.yaml
+  created  gtm/personas.yaml
+  created  gtm/messaging.yaml
+  created  gtm/topics.yaml
+  created  gtm/competitors.yaml
 ```
 
-### AI-Powered Analysis
-These commands generate prompts you can feed into local assistants such as Copilot, Cursor, or Claude Desktop.
-```bash
-# Analyze a competitor site (optional AI prompt)
-gtm-toolkit analyze --competitor https://competitor.com --output competitor.json
+Write down a decision. Here, a term the team stopped using and a spelling it wants to own:
 
-# Generate content gap ideas (optional AI prompt)
-gtm-toolkit analyze --gaps
-
-# Research keywords with AI assistance
-gtm-toolkit analyze --keywords "gtm as code" --output keywords.json
+```yaml
+# gtm/messaging.yaml
+vocabulary:
+  prefer:
+    - term: "GTM as code"
+      insteadOf: ["GTM-as-code", "marketing as code"]
+  avoid:
+    - term: "leverage"
+      reason: "Say what the thing does."
 ```
 
-### Automated File Generation
-```bash
-# Generate robots.txt with AI bot controls
-gtm-toolkit generate --robots
+Now every page is held to it, with a file, a line and the reason:
 
-# Create comprehensive sitemap with images
-gtm-toolkit generate --sitemap
+```console
+$ npx gtm lint
+content/blog/2026-01-06-launch.md
+  1:1   error  Missing `description` in frontmatter.  seo/description
+  8:7   error  Link target /pricing-old does not exist.  seo/internal-links
+  12:4  warn   "leverage" in body.  messaging/avoid
+               Say what the thing does.
+  19:1  warn   "marketing as code" in body. Use "GTM as code".  messaging/prefer
 
-# Generate complete SEO setup
-gtm-toolkit generate --all --framework nextjs
+✖ 4 problems (2 errors, 2 warnings)
 ```
 
-### Google Search Console Integration
-```bash
-import { GoogleSearchConsoleClient } from 'gtm-toolkit';
+Compile the spec, then let CI guard it:
 
-const client = new GoogleSearchConsoleClient(credentials, 'https://yoursite.com');
-const report = await client.generateSEOInsights({ days: 30 });
+```console
+$ npx gtm build
+  created       public/robots.txt
+  created       public/sitemap.xml
+  created       public/llms.txt
+  created       GTM.md
+
+$ npx gtm check
+✓ validate   ok
+✓ lint       ok
+✓ build      ok
+✓ No problems
 ```
 
-## 🧰 CLI Overview
+## The spec
+
+`gtm/gtm.yaml` is the root. Each strategy section sits in its own file next to it, or inline under the same key.
+
+| File | What it declares |
+| --- | --- |
+| `gtm.yaml` | The site, its owner, content collections, routes, crawler policy, outputs, lint settings |
+| `positioning.yaml` | Category, one-liner, problem, audience, differentiators with proof, and what you are not |
+| `personas.yaml` | Who you write for: jobs, pains, triggers, and the questions they ask search engines and assistants |
+| `messaging.yaml` | Pillars with proof, boilerplate, vocabulary to prefer and to avoid, voice |
+| `topics.yaml` | What you want to be found for: keywords and questions per topic |
+| `competitors.yaml` | The alternatives, stated fairly, and the honest difference |
+
+Every file has a JSON Schema in `schemas/`, so editors that speak `yaml-language-server` autocomplete and validate as you type. `gtm init` adds the modeline for you.
+
+Content joins the strategy through frontmatter:
+
+```yaml
+---
+title: What GTM as code means for a small team
+description: What goes in the repo, what gets checked, and what a small team gets back.
+date: 2026-01-05
+topic: gtm-as-code      # an id from topics.yaml
+persona: founder        # an id from personas.yaml
+answers:
+  - "What is GTM as code?"   # a question from a persona or topic
+---
+```
+
+## Commands
 
 | Command | What it does |
 | --- | --- |
-| `gtm-toolkit init` | Detects your framework, scaffolds `gtm.config.js`, and optionally installs recommended dependencies. |
-| `gtm-toolkit generate` | Writes `robots.txt`, `sitemap.xml`, and other SEO scaffolding for your framework. |
-| `gtm-toolkit lint` | Runs the 50+ SEO guard rails against Markdown content with console or JSON output. |
-| `gtm-toolkit analyze` | Generates competitor, gap, and keyword prompts for local AI assistants. |
-| `gtm-toolkit suggestions` | Builds an execution plan combining lint findings with prompts for local AI assistants. |
-| `gtm-toolkit fix` | Applies auto-fixable issues from a plan, optionally reviewing each change interactively (includes local-AI prompts). |
-| `gtm-toolkit audit` | Checks content files plus technical assets like `robots.txt` and `sitemap.xml`. |
+| `gtm init` | Scaffold a `gtm/` spec. Detects your content folders. Never overwrites a file. |
+| `gtm validate` | Check the spec: schema, references between files, claims without proof. |
+| `gtm lint [paths...]` | Check content against the spec. `--changed [base]` for pull requests, `--format github` for inline annotations. |
+| `gtm build` | Write the generated files. `--check` writes nothing and exits 1 on drift. `--dry-run` shows the plan. |
+| `gtm check` | `validate` + `lint` + `build --check` in one pass. The command for CI. |
+| `gtm coverage` | Strategy against execution: published content per persona, topic, pillar and question. |
+| `gtm diff [base]` | What changed in the strategy since a git ref, and which content it strands. |
+| `gtm rules` | List the content rules and their current severity. |
+| `gtm explain <rule>` | Say what a rule checks and why it exists. |
 
-## 📦 Programmatic API Highlights
+Every command takes `-C, --cwd <dir>` and `--dir <dir>` (the spec directory, `gtm` by default). Reporting commands take `--format stylish|json|github`. Exit code 0 means clean, 1 means findings, 2 means the command was used wrongly.
 
-```ts
-import {
-  lintContent,
-  summarizeLintResults,
-  generateRobots,
-  generateSitemap,
-  researchKeywords,
-  GoogleSearchConsoleClient
-} from 'gtm-toolkit';
+## What `gtm build` writes
 
-const results = lintContent(markdownString, { filename: 'post.md' });
-const { summary, score } = summarizeLintResults(results);
+All output is deterministic. No timestamps, same bytes for the same input, which is what makes `gtm build --check` a real gate.
 
-const robotsTxt = generateRobots(config, { includeAnalytics: true });
-const sitemapXml = await generateSitemap(config, { contentPath: 'content', outputPath: 'public' });
+- **`robots.txt`** from one crawler policy. AI crawlers are grouped by purpose, because "may a model train on this" and "may an assistant cite this" are different decisions: `crawlers.ai.training`, `crawlers.ai.search` and `crawlers.ai.user`, each `allow` or `disallow`, with per-agent overrides.
+- **`sitemap.xml`** from your content collections and declared routes. URLs come from file names, drafts and `noindex` pages are left out, and `lastmod` is only set when there is a real date.
+- **`llms.txt`** in the [llmstxt.org](https://llmstxt.org) shape: who you are, what you are not, then every page with its description.
+- **`GTM.md`**, the whole spec compiled into one brief: positioning, personas, pillars with the proof you may cite, vocabulary, topics, alternatives and the content rules. Point `AGENTS.md`, `CLAUDE.md` or your editor rules at it.
+- **JSON-LD** (opt in with `outputs.schema`): a schema.org graph for the site and its owner, as a JSON file your layout can embed.
 
-const keywordIdeas = await researchKeywords('gtm as code', 'developers');
-```
+## Rules
 
-## 🛠 Configuration
+`gtm lint` runs 21 content rules. `gtm validate` runs 11 spec checks. `gtm explain <rule>` prints the reasoning for any of them.
 
-Create a `gtm.config.js` in your project root:
+| Rule | Default | Checks that |
+| --- | --- | --- |
+| `seo/title` | error | Every page has a title in its frontmatter. |
+| `seo/title-length` | warn | Titles fit the space search results give them. |
+| `seo/description` | error | Every page has a description (or summary) in its frontmatter. |
+| `seo/description-length` | warn | Descriptions are long enough to say something and short enough to survive truncation. |
+| `seo/date` | error | Articles carry a real date in YYYY-MM-DD form. |
+| `seo/slug` | warn | URLs are lowercase words separated by hyphens. |
+| `seo/single-h1` | error | The frontmatter title is the only H1. |
+| `seo/heading-order` | warn | Headings do not skip levels. |
+| `seo/image-alt` | error | Images have alt text. |
+| `seo/link-text` | warn | Link text says where the link goes. |
+| `seo/internal-links` | error | Internal links and images point at something that exists. |
+| `seo/min-internal-links` | warn | Articles link to at least one other page on the site. |
+| `seo/placeholder` | error | No placeholder text or links ship. |
+| `seo/markdown-fence` | error | Code fences are closed. |
+| `seo/unique-title` | error | No two pages share a title. |
+| `seo/unique-description` | warn | No two pages share a description. |
+| `messaging/avoid` | warn | Content does not use terms the messaging spec rules out. |
+| `messaging/prefer` | warn | Content uses the preferred spelling of the terms the team owns. |
+| `messaging/refs` | error | Frontmatter personas, topics and pillars exist in the spec. |
+| `messaging/topic-keywords` | warn | A page tagged with a topic uses that topic's language up front. |
+| `messaging/untagged` | off | Articles declare the topic or persona they serve. |
 
-```javascript
-module.exports = {
-  framework: 'nextjs',
-  seo: {
-    siteName: 'Your Site Name',
-    siteUrl: 'https://yoursite.com',
-    defaultTitle: 'Your Default Title',
-    defaultDescription: 'Your meta description',
-    keywords: ['your', 'primary', 'keywords'], // [NEW] Custom primary keywords
-    secondaryKeywords: ['secondary', 'terms'] // [NEW] Custom secondary keywords
-  },
-  content: {
-    contentPath: 'content',
-    blogPath: 'content/blog',
-    outputPath: 'public'
-  },
-  robots: {
-    allowAIBots: true,
-    customRules: [
-      'User-agent: GPTBot\\nAllow: /blog/',
-      'User-agent: Claude-Web\\nAllow: /docs/'
-    ],
-    sitemapUrl: 'https://yoursite.com/sitemap.xml'
-  },
-  ai: {
-    apiKey: process.env.GOOGLE_API_KEY, // [NEW] Use environment variable
-    assistant: 'gemini',
-    model: 'gemini-pro'
-  }
-}
-```
+Tune them in `gtm.yaml`:
 
-## 📋 Environment Setup
-
-```bash
-# Required for AI-powered features via Google Gemini
-GOOGLE_API_KEY=your_gemini_api_key
-
-# Optional: Local assistant token
-AI_ASSISTANT_KEY=optional_local_assistant_token
-
-# Required for Google Search Console integration (optional)
-GOOGLE_SEARCH_CONSOLE_CREDENTIALS=path/to/credentials.json
-```
-
-## 🎯 SEO Guard Rails
-
-GTM Toolkit implements proven SEO rules including:
-
-### Must-Have Frontmatter
-- ✅ **Title**: 45-70 characters with primary keyword
-- ✅ **Date**: ISO format (YYYY-MM-DD)
-- ✅ **Category**: From allowed categories
-- ✅ **Summary**: 120-160 characters (meta description)
-- ✅ **Readtime**: Estimated reading time
-
-### Content Structure
-- ✅ **Single H1**: From frontmatter title only
-- ✅ **Hierarchical headings**: Proper H2→H3 flow
-- ✅ **Keyword placement**: Natural primary keyword in first 100 words
-- ✅ **Internal linking**: At least one internal link
-- ✅ **Descriptive anchors**: No \"click here\" or bare URLs
-
-### Technical SEO
-- ✅ **Image alt text**: Meaningful descriptions for all images
-- ✅ **No placeholders**: No lorem ipsum, #, /todo links
-- ✅ **Valid Markdown**: No broken syntax
-- ✅ **Keyword density**: Sensible density (<2.5%)
-
-## 🏗 Framework Integration
-
-### Next.js
-```bash
-gtm-toolkit init --framework nextjs
-# Generates: robots.txt, sitemap.xml, SEO components
-```
-
-### Nuxt
-```bash
-gtm-toolkit init --framework nuxt
-# Generates: nuxt.config.js SEO setup, content validation
-```
-
-### Astro
-```bash
-gtm-toolkit init --framework astro
-# Generates: Astro SEO components and content pipeline
-```
-
-### Custom Framework
-```bash
-gtm-toolkit init --framework custom
-# Generates: Generic SEO files and validation rules
-```
-
-## 🔄 CI/CD Integration
-
-### GitHub Actions
 ```yaml
-name: GTM Toolkit SEO Validation
-on:
-  pull_request:
-    paths: ['content/**/*.md']
+lint:
+  rules:
+    seo/title-length: [warn, { min: 30, max: 60 }]
+    messaging/avoid: error
+  overrides:
+    - files: ["content/blog/2024-*.md"]   # the backlog you have not rewritten yet
+      rules:
+        seo/description-length: off
+```
 
+## CI
+
+```yaml
+# .github/workflows/gtm.yml
+name: GTM
+on: pull_request
 jobs:
-  seo-validation:
+  gtm:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '18'
-
-      - name: Install GTM Toolkit
-        run: npm install -g gtm-toolkit
-
-      - name: Run SEO Linting
-        run: gtm-toolkit lint --changed --format github
-        env:
-          AI_ASSISTANT_KEY: ${{ secrets.AI_ASSISTANT_KEY || 'not-set' }}
+          node-version: 22
+      - run: npm ci
+      - run: npx gtm check --format github
 ```
 
-### Git Hooks
-```bash
-# Install pre-commit hooks
-gtm-toolkit hooks install
+`--format github` turns findings into annotations on the pull request diff. To comment on strategy changes, run `npx gtm diff origin/main --format md` and post the output.
 
-# Automatically lints content before commits
-# Prevents bad content from entering your repo
+## Coding agents
+
+An agent writing your landing page has never met your buyer. `GTM.md` is the introduction. Add one line to the file your agent already reads:
+
+```md
+<!-- AGENTS.md or CLAUDE.md -->
+Read GTM.md before writing or editing anything customer-facing. Run `npx gtm check` before you finish.
 ```
 
-## 📈 Performance Tracking
+The agent gets the positioning, the personas and the vocabulary up front, and `gtm check` tells it, with a file and a line, when it drifted. Claims with no proof on file are marked as such, so the agent does not state them as fact.
 
-GTM Toolkit provides comprehensive SEO and content performance monitoring through Google Search Console integration.
+## Programmatic API
 
-## 🌍 Integrations
+Everything the CLI does is a pure function over a loaded spec and a list of content items.
 
-### Built-in Integrations
-- ✅ **AI-Ready Integrations** - Intelligent content analysis and optimization
-- ✅ **Google Search Console** - Performance tracking, keyword research, and indexing status
-- ✅ **GitHub Actions** - CI/CD workflow integration
+```ts
+import { loadSpec, loadContent, lintContent, buildArtifacts, coverage } from 'gtm-toolkit';
 
-## 🧪 Testing & Validation
+const { spec, root, diagnostics } = loadSpec();
+if (!spec) throw new Error(diagnostics[0].message);
 
-```bash
-# Run comprehensive test suite
-npm test
-
-# Test specific functionality
-gtm-toolkit test seo-rules content/blog/
-gtm-toolkit test robots-txt public/robots.txt
-gtm-toolkit test sitemap public/sitemap.xml
-
-# Performance benchmarking
-gtm-toolkit benchmark --compare-competitors
+const items = loadContent(root, spec);
+const findings = lintContent(root, spec, items);       // Diagnostic[]
+const files = buildArtifacts(spec, items);             // { name, path, content }[]
+const report = coverage(spec, items);                  // personas, topics, questions
 ```
 
-## 📚 Documentation
+## Migrating from 0.5
 
-- **[Getting Started Guide](https://gtmascode.dev/docs/getting-started)**
-- **[API Reference](https://gtmascode.dev/docs/api)**
-- **[Features Overview](https://gtmascode.dev/docs/features)**
-- **[Best Practices](https://gtmascode.dev/docs/guides)**
-- **[CLI Reference](https://gtmascode.dev/docs/api/commands)**
+Version 2 is a rewrite. `gtm init` reads an existing `gtm.config.js` and carries over the site name, URL, description and AI crawler setting.
 
-## 🤝 Contributing
+- `gtm.config.js` is replaced by `gtm/gtm.yaml`.
+- `generate` is now `build`. It overwrites its own output (0.5 skipped existing files, so they went stale) and builds sitemap URLs from file names (0.5 guessed them from titles).
+- `lint` rule ids changed from `SEO-001` style to names such as `seo/title-length`. Keywords and categories are no longer hardcoded: they come from `topics.yaml`.
+- `analyze`, `suggestions`, `fix` and `audit` are gone, along with the Google Search Console, Gemini and analytics-snippet code. They produced prompts or wrapped other products. See the [changelog](CHANGELOG.md) for the reasoning.
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+## What it does not do
 
-## 📣 Attribution Requirement
+It does not call a language model, track analytics, research keywords or publish anything. It reads files in your repo and writes files in your repo. That is the point: every decision is in a diff, and every check runs offline.
 
-This project is released under the MIT License with attribution. If you use GTM Toolkit in any public project, distribution, or documentation, please include a credit linking back to [Raz Kaplan](https://www.gtmascode.dev/) or [Raz Kaplan on LinkedIn](https://www.linkedin.com/in/razkaplan/).
+## License
 
-### Development Setup
-```bash
-git clone https://github.com/razkaplan/gtm-toolkit.git
-cd gtm-toolkit
-npm install
-npm run dev
-```
-
-### Running Tests
-```bash
-npm test                # Unit tests
-npm run test:integration # Integration tests
-npm run test:e2e        # End-to-end tests
-```
-
-## 📊 Roadmap
-
-### v0.1.0 - Current Release ✅
-- ✅ AI-ready integration layer for content optimization
-- ✅ 50+ SEO rules with automated linting
-- ✅ Google Search Console integration
-- ✅ Smart robots.txt and sitemap generation
-- ✅ CLI tools with interactive prompts
-- ✅ TypeScript support and type safety
-
-### v0.5.3 - AI & Config Update 🚀
-- ✅ **Google Gemini Integration**: Replaced mock data with real AI calls
-- ✅ **Dynamic Configuration**: Removed hardcoded keywords
-- ✅ **Flexible Analysis**: Run keyword research with just an AI key (GSC optional)
-
-### Future Enhancements
-GTM Toolkit is actively developed with community input. Future enhancements will be driven by user feedback and real-world usage patterns.
-
-## 💡 Use Cases
-
-### Developer Marketing Teams
-- Automate content validation in CI/CD pipelines
-- Generate SEO-optimized documentation
-- Track technical content performance
-- Integrate marketing metrics with development workflows
-
-### Content Teams
-- Ensure consistent SEO compliance across all content
-- Automate competitor analysis and content gap identification
-- Generate data-driven content strategies
-- Streamline content review and approval processes
-
-### Growth Teams
-- Connect marketing campaigns to code deployments
-- Track feature launch performance automatically
-- Generate changelog-driven marketing content
-- Optimize conversion funnels with A/B testing
-
-## 🏆 Success Stories
-
-> \"GTM Toolkit reduced our content creation time by 60% while improving our average SEO score by 40%. The AI-ready integration layer is game-changing for content optimization.\"
-> — **Leading Developer Tools Company**
-
-> \"Finally, a marketing tool that speaks developer language. Our entire go-to-market process is now in Git with automated quality gates.\"
-> — **Y Combinator Startup**
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) file for details.
-
-## 🙋 Support
-
-- **Documentation**: [gtmascode.dev/docs](https://gtmascode.dev/docs)
-- **GitHub Issues**: [Report bugs or request features](https://github.com/razkaplan/gtm-toolkit/issues)
-- **Website**: [gtmascode.dev](https://gtmascode.dev)
-
----
-
-<div align="center">
-  <strong>Built with ❤️ for the developer marketing community</strong><br>
-  <sub>Transforming marketing from art to science, one commit at a time.</sub>
-</div>
+MIT with attribution. See [LICENSE](LICENSE).
