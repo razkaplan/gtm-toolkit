@@ -233,7 +233,7 @@ const placeholder: FileRule = {
   id: 'seo/placeholder',
   scope: 'file',
   description: 'No placeholder text or links ship.',
-  rationale: 'Drafts leak. A TODO, a lorem ipsum or a link to "#" in production tells readers nobody read the page before it went out. Code blocks are ignored.',
+  rationale: 'Drafts leak. A leftover task marker, filler text or a link to "#" in production tells readers nobody read the page before it went out. Code blocks are ignored.',
   defaultSeverity: 'error',
   defaultOptions: {},
   check({ item, report }) {

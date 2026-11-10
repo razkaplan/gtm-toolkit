@@ -34,10 +34,10 @@ export const siteSchema = z.strictObject({
 
 export const ownerSchema = z.strictObject({
   type: z.enum(['person', 'organization']).describe('Drives the schema.org type in structured data.'),
-  name: text,
-  url: z.url().optional(),
+  name: text.describe('The person or organization behind the site.'),
+  url: z.url().optional().describe('Their canonical page. Defaults to site.url.'),
   jobTitle: z.string().optional().describe('For a person.'),
-  description: z.string().optional(),
+  description: z.string().optional().describe('One or two sentences about them.'),
   sameAs: z.array(z.url()).default([]).describe('Profiles that are the same entity: LinkedIn, GitHub, X.'),
 });
 
@@ -50,26 +50,26 @@ export const collectionSchema = z.strictObject({
     .describe('URL pattern, for example "/blog/{slug}". An index file maps to its folder.'),
   type: z.enum(['article', 'doc', 'page']).default('article').describe('Articles are dated; docs and pages are not.'),
   label: z.string().optional().describe('Section heading in llms.txt. Defaults to the collection key.'),
-  sitemap: z.boolean().default(true),
-  llms: z.boolean().default(true),
-  lint: z.boolean().default(true),
+  sitemap: z.boolean().default(true).describe('List these pages in sitemap.xml.'),
+  llms: z.boolean().default(true).describe('List these pages in llms.txt.'),
+  lint: z.boolean().default(true).describe('Run `gtm lint` on these files.'),
 });
 
 export const routeSchema = z.union([
   z.string().regex(/^\//, 'routes start with "/"'),
   z.strictObject({
-    path: z.string().regex(/^\//, 'routes start with "/"'),
-    title: z.string().optional(),
-    description: z.string().optional(),
-    lastmod: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'use YYYY-MM-DD').optional(),
-    sitemap: z.boolean().default(true),
-    llms: z.boolean().default(true),
+    path: z.string().regex(/^\//, 'routes start with "/"').describe('The URL path, starting with "/".'),
+    title: z.string().optional().describe('Link text in llms.txt. A route with no title is left out of it.'),
+    description: z.string().optional().describe('The sentence after the link in llms.txt.'),
+    lastmod: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'use YYYY-MM-DD').optional().describe('Date for the sitemap. A route that lists a collection is dated by its newest item.'),
+    sitemap: z.boolean().default(true).describe('List this route in sitemap.xml.'),
+    llms: z.boolean().default(true).describe('List this route in llms.txt.'),
   }),
 ]);
 
 export const contentSchema = z.strictObject({
   publicDir: z.string().default('public').describe('Where static assets live. Used to resolve links to files.'),
-  collections: z.record(id, collectionSchema).default({}),
+  collections: z.record(id, collectionSchema).default({}).describe('Folders of markdown that become pages, keyed by a name you choose.'),
   routes: z.array(routeSchema).default([]).describe('Pages that are not backed by a markdown file.'),
 });
 
@@ -89,15 +89,15 @@ export const crawlersSchema = z.strictObject({
 });
 
 export const outputsSchema = z.strictObject({
-  robots: z.union([z.string(), z.literal(false)]).default('public/robots.txt'),
-  sitemap: z.union([z.string(), z.literal(false)]).default('public/sitemap.xml'),
-  llms: z.union([z.string(), z.literal(false)]).default('public/llms.txt'),
+  robots: z.union([z.string(), z.literal(false)]).default('public/robots.txt').describe('Where to write robots.txt, or false to skip it.'),
+  sitemap: z.union([z.string(), z.literal(false)]).default('public/sitemap.xml').describe('Where to write sitemap.xml, or false to skip it.'),
+  llms: z.union([z.string(), z.literal(false)]).default('public/llms.txt').describe('Where to write llms.txt, or false to skip it.'),
   context: z.union([z.string(), z.literal(false)]).default('GTM.md').describe('The brief for coding agents and new teammates.'),
   schema: z.union([z.string(), z.literal(false)]).default(false).describe('schema.org JSON-LD graph as a JSON file.'),
 });
 
 export const lintSchema = z.strictObject({
-  rules: rulesMap.default({}),
+  rules: rulesMap.default({}).describe('Rule id to "error", "warn", "off" or [severity, options].'),
   ignore: z.array(z.string()).default([]).describe('Globs of content files to skip.'),
   overrides: z
     .array(z.strictObject({ files: z.array(z.string()).min(1), rules: rulesMap }))
@@ -110,11 +110,11 @@ const proof = z.array(text).default([]).describe('Evidence: a number, a link, a 
 export const positioningSchema = z.strictObject({
   category: text.describe('The market category you want to be filed under.'),
   oneLiner: text.describe('What it is and who it is for, in one sentence.'),
-  tagline: z.string().optional(),
+  tagline: z.string().optional().describe('A short line for headers and social cards.'),
   problem: text.describe('The problem, in the words of the people who have it.'),
   audience: z.array(id).default([]).describe('Persona ids, most important first.'),
   differentiators: z
-    .array(z.strictObject({ id, claim: text, proof }))
+    .array(z.strictObject({ id, claim: text.describe('The difference, stated plainly.'), proof }))
     .default([])
     .describe('Why you, and not the alternative.'),
   notThis: z
@@ -124,12 +124,12 @@ export const positioningSchema = z.strictObject({
 });
 
 export const personaSchema = z.strictObject({
-  id,
-  name: text,
-  role: z.string().optional(),
-  description: z.string().optional(),
+  id: id.describe('Stable id. Content refers to it with `persona:` in frontmatter.'),
+  name: text.describe('What the team calls this reader.'),
+  role: z.string().optional().describe('Job title or situation.'),
+  description: z.string().optional().describe('A sentence or two of context.'),
   jobs: z.array(text).default([]).describe('Jobs to be done.'),
-  pains: z.array(text).default([]),
+  pains: z.array(text).default([]).describe('What makes those jobs hard today.'),
   triggers: z.array(text).default([]).describe('Events that make them look for a solution.'),
   questions: z
     .array(text)
@@ -141,11 +141,11 @@ export const messagingSchema = z.strictObject({
   pillars: z
     .array(
       z.strictObject({
-        id,
-        title: text,
-        claim: text,
+        id: id.describe('Stable id. Content refers to it with `pillar:` in frontmatter.'),
+        title: text.describe('The pillar as a headline.'),
+        claim: text.describe('The argument, in a sentence or two.'),
         proof,
-        personas: z.array(id).default([]),
+        personas: z.array(id).default([]).describe('Persona ids this pillar speaks to.'),
       }),
     )
     .default([]),
@@ -158,13 +158,19 @@ export const messagingSchema = z.strictObject({
   vocabulary: z
     .strictObject({
       prefer: z
-        .array(z.strictObject({ term: text, insteadOf: z.array(text).min(1), reason: z.string().optional() }))
+        .array(
+          z.strictObject({
+            term: text.describe('The spelling you own.'),
+            insteadOf: z.array(text).min(1).describe('Variants `gtm lint` should flag.'),
+            reason: z.string().optional().describe('Shown next to the finding.'),
+          }),
+        )
         .default([]),
       avoid: z
         .array(
           z.strictObject({
             term: text.describe('A word or phrase, matched case-insensitively on word boundaries.'),
-            reason: z.string().optional(),
+            reason: z.string().optional().describe('Shown next to the finding.'),
           }),
         )
         .default([]),
@@ -174,26 +180,26 @@ export const messagingSchema = z.strictObject({
 });
 
 export const topicSchema = z.strictObject({
-  id,
-  name: text,
-  description: z.string().optional(),
-  pillar: id.optional(),
-  personas: z.array(id).default([]),
+  id: id.describe('Stable id. Content refers to it with `topic:` in frontmatter.'),
+  name: text.describe('The topic as readers would name it.'),
+  description: z.string().optional().describe('What the topic covers.'),
+  pillar: id.optional().describe('The messaging pillar this topic supports.'),
+  personas: z.array(id).default([]).describe('Persona ids who care about it.'),
   keywords: z.array(text).default([]).describe('Phrases a piece on this topic is expected to use.'),
-  questions: z.array(text).default([]),
+  questions: z.array(text).default([]).describe('Questions the topic should answer. Counted by `gtm coverage`.'),
 });
 
 export const competitorSchema = z.strictObject({
-  id,
-  name: text,
-  url: z.url().optional(),
-  kind: z.enum(['direct', 'adjacent', 'status-quo']).default('direct'),
+  id: id.describe('Stable id.'),
+  name: text.describe('The alternative, by name.'),
+  url: z.url().optional().describe('Their site.'),
+  kind: z.enum(['direct', 'adjacent', 'status-quo']).default('direct').describe('direct: same job, same buyer. adjacent: overlapping job. status-quo: what people do without a product.'),
   summary: text.describe('What they are, stated fairly.'),
   weDiffer: text.describe('The honest difference. This is what agents will repeat.'),
 });
 
 export const specSchema = z.strictObject({
-  version: z.literal(2, { error: 'this toolkit reads spec version 2' }),
+  version: z.literal(2, { error: 'this toolkit reads spec version 2' }).describe('Spec format version. Always 2.'),
   site: siteSchema,
   owner: ownerSchema.optional(),
   content: contentSchema.prefault({}),

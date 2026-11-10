@@ -78,7 +78,13 @@ export function coverage(spec: Spec, items: ContentItem[]): CoverageReport {
     totals: { published: articles.length, tagged: articles.length - untagged.length, untagged: untagged.length },
     personas: spec.personas.map((persona) => row(persona.id, persona.name, (item) => item.personas)),
     topics: spec.topics.map((topic) => row(topic.id, topic.name, (item) => item.topics)),
-    pillars: (spec.messaging?.pillars ?? []).map((pillar) => row(pillar.id, pillar.title, (item) => item.pillars)),
+    // A piece supports a pillar when it says so, or when one of its topics belongs to that pillar.
+    pillars: (spec.messaging?.pillars ?? []).map((pillar) =>
+      row(pillar.id, pillar.title, (item) => [
+        ...item.pillars,
+        ...spec.topics.filter((topic) => topic.pillar && item.topics.includes(topic.id)).map((topic) => topic.pillar as string),
+      ]),
+    ),
     questions,
     untagged,
   };

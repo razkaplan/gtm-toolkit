@@ -20,7 +20,7 @@ describe('coverage', () => {
       { id: 'marketer', name: 'Product marketer', items: 0, newest: undefined },
     ]);
     expect(report.topics[0]).toMatchObject({ id: 'gtm-as-code', items: 1 });
-    expect(report.pillars[0]).toMatchObject({ id: 'in-repo', items: 0 });
+    expect(report.pillars[0]).toMatchObject({ id: 'in-repo', items: 1 });
     expect(report.untagged).toEqual(['content/blog/2026-02-01-untagged.md']);
   });
 
