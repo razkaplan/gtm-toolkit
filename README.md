@@ -7,7 +7,9 @@ npm install --save-dev gtm-toolkit
 npx gtm init
 ```
 
-Created and maintained by [Raz Kaplan](https://www.gtmascode.dev). Docs: [gtmascode.dev/docs](https://www.gtmascode.dev/docs).
+Created by [Raz Kaplan](https://www.gtmascode.dev). Documentation is in [`docs/`](docs/README.md).
+
+> **Status, November 2026:** this project is no longer under active development. The practice it was built for went mainstream and the vendors shipped their own command-line tools. [Why I retired it, and what to use instead](https://www.gtmascode.dev/blog/2026-11-10-why-i-retired-gtm-toolkit). The code works and is tested, and you are welcome to read it or fork it.
 
 ## The idea
 
