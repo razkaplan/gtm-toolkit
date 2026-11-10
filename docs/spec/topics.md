@@ -61,7 +61,7 @@ Topic `questions` join the persona questions in the coverage report, and are ans
 
 ## Topic pages
 
-Because topics are data, a site can build pages from them. This site's [topic pages](https://www.gtmascode.dev/topics/gtm-as-code) and the topic filters on the essay index are rendered from `topics.yaml` through the [programmatic API](../reference/api.md).
+Because topics are data, a site can build pages from them. The [topic pages] on gtmascode.dev(https://www.gtmascode.dev/topics/gtm-as-code) and its topic filters are rendered from `topics.yaml` through the [programmatic API](../reference/api.md).
 
 ## Checks that apply
 

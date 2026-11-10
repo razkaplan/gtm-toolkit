@@ -2,7 +2,7 @@
 
 Wire GTM Toolkit into a Next.js App Router site: generated files in public/, a build step, structured data in the layout and the spec in your pages.
 
-GTM Toolkit reads and writes files, so it works with any framework. This guide shows the setup this site uses on Next.js with the App Router. The same shape applies to Astro, Nuxt, Eleventy or a hand-rolled generator.
+GTM Toolkit reads and writes files, so it works with any framework. This guide shows the setup gtmascode.dev uses on Next.js with the App Router. The same shape applies to Astro, Nuxt, Eleventy or a hand-rolled generator.
 
 ## 1. Point the collections at your content
 
@@ -32,7 +32,7 @@ The `url` pattern has to produce the URL your route actually serves. If the page
 
 Generated files go to `public/`, which Next.js serves from the site root.
 
-Delete `app/robots.ts` and `app/sitemap.ts` if you have them. A file in `public/` and a route handler for the same path are two sources of truth, and the static file wins, which makes the route dead code that looks alive. This site shipped a year-old sitemap for exactly that reason.
+Delete `app/robots.ts` and `app/sitemap.ts` if you have them. A file in `public/` and a route handler for the same path are two sources of truth, and the static file wins, which makes the route dead code that looks alive. gtmascode.dev shipped a year-old sitemap for exactly that reason.
 
 ## 3. Build before the site builds
 
@@ -115,7 +115,7 @@ const nextConfig = {
 }
 ```
 
-On this site that one helper drives the topic filters on the [essay index](https://www.gtmascode.dev/blog), the [topic pages](https://www.gtmascode.dev/topics/gtm-as-code), the comparison table on [What is GTM as code?](https://www.gtmascode.dev/gtm-as-code) and the open-question backlog on the home page. Rename a topic in `topics.yaml` and every one of those updates on the next build.
+On gtmascode.dev that one helper drives the topic filters on the [essay index](https://www.gtmascode.dev/blog), the [topic pages](https://www.gtmascode.dev/topics/gtm-as-code), the comparison table on [What is GTM as code?](https://www.gtmascode.dev/gtm-as-code) and the open-question backlog on the home page. Rename a topic in `topics.yaml` and every one of those updates on the next build.
 
 ## 6. Make unknown slugs a 404
 
