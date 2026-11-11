@@ -13,9 +13,14 @@ GTM Toolkit is an open-source CLI for running [GTM as code](https://www.gtmascod
 ## Install
 
 ```bash
-npm install --save-dev gtm-toolkit
+git clone https://github.com/razkaplan/gtm-toolkit
+cd gtm-toolkit && npm install && npm run build && npm pack
+# then, in your project:
+npm install --save-dev ../gtm-toolkit/gtm-toolkit-2.0.0.tgz
 npx gtm init
 ```
+
+Version 2 is not published to npm. The `gtm-toolkit` package on the registry is the old 0.5.3. Do not adopt it: build from source as above.
 
 It needs Node 20 or newer and a project with Markdown content. It works with any site generator, because it only reads and writes files.
 

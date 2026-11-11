@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, posix, sep } from 'node:path';
 
 export interface InitOptions {
   root: string;
@@ -17,7 +17,6 @@ export interface InitResult {
   notes: string[];
 }
 
-const SCHEMA_BASE = 'https://unpkg.com/gtm-toolkit@2/schemas';
 
 const COLLECTION_GUESSES: Array<{ path: string; name: string; url: string; type: 'article' | 'doc'; label: string }> = [
   { path: 'content/blog', name: 'blog', url: '/blog/{slug}', type: 'article', label: 'Blog' },
@@ -71,6 +70,8 @@ function legacy(root: string): { name?: string; url?: string; description?: stri
 
 export function init(options: InitOptions): InitResult {
   const dir = options.dir ?? 'gtm';
+  // Version 2 is not on npm, so there is no CDN copy of the schemas. Point editors at the installed package.
+  const SCHEMA_BASE = posix.relative(dir.split(sep).join('/'), 'node_modules/gtm-toolkit/schemas');
   const result: InitResult = { written: [], skipped: [], notes: [] };
   const pkg = readJson(join(options.root, 'package.json'));
   const old = legacy(options.root);

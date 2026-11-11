@@ -3,9 +3,14 @@
 Go-to-market as code. Declare your positioning, personas, messaging and topics in the repo, check your content against them in CI, and compile the result for the three audiences every page now has: people, search engines and AI models.
 
 ```bash
-npm install --save-dev gtm-toolkit
+git clone https://github.com/razkaplan/gtm-toolkit
+cd gtm-toolkit && npm install && npm run build && npm pack
+# then, in your project:
+npm install --save-dev ../gtm-toolkit/gtm-toolkit-2.0.0.tgz
 npx gtm init
 ```
+
+Version 2 is not published to npm. The `gtm-toolkit` package on the registry is the old 0.5.3. Do not adopt it: build from source as above.
 
 Created by [Raz Kaplan](https://www.gtmascode.dev). Documentation is in [`docs/`](docs/README.md).
 

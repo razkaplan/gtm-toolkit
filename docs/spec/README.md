@@ -5,7 +5,7 @@ The root of the GTM spec: the site and its owner, content collections and routes
 `gtm/gtm.yaml` is the one required file. It says what the site is, where the content lives and what to generate. The strategy sits in the files next to it.
 
 ```yaml
-# yaml-language-server: $schema=https://unpkg.com/gtm-toolkit@2/schemas/gtm.schema.json
+# yaml-language-server: $schema=../node_modules/gtm-toolkit/schemas/gtm.schema.json
 version: 2
 
 site:
